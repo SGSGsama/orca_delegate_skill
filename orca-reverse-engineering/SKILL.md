@@ -1,6 +1,6 @@
 ---
 name: orca-reverse-engineering
-description: Use Orca by default for reverse-engineering requests involving unknown compiled code, binaries, APKs or native libraries, multiple functions, protocols, data structures, decompiler output, or evidence cross-checking. Trigger whenever there are two or more separable analysis questions or targets, the scope is initially unknown, or the user asks for comprehensive, parallel, multi-agent, or Orca analysis. A coordinator must delegate bounded investigation to Terra or Luna and synthesize the evidence. Exclude only a single trivial read-only lookup requiring no broader code exploration.
+description: Use Orca by default for reverse-engineering requests involving unknown compiled code, binaries, APKs or native libraries, multiple functions, protocols, data structures, decompiler output, or evidence cross-checking. Trigger whenever there are two or more separable analysis questions or targets, the scope is initially unknown, or the user asks for comprehensive, parallel, multi-agent, or Orca analysis. A coordinator must delegate bounded investigation to Terra or Luna, favor broad safe fan-out when modules and context permit, and synthesize the evidence. Exclude only a single trivial read-only lookup requiring no broader code exploration.
 ---
 
 # Orca Reverse Engineering
@@ -64,6 +64,20 @@ Inspect enough of the target to identify separable functions, regions, or hypoth
 Read [references/task-templates.md](references/task-templates.md) when drafting a function, structure, protocol, contradiction-resolution, or propagation task.
 
 Create all independent Tasks before starting their workers so they can run as one parallel wave. Use dependencies for real ordering constraints. Avoid two workers mutating the same analysis database or output file unless independent verification is intentional and writes are disabled.
+
+## Favor broad, useful fan-out
+
+For every candidate workstream, apply this three-part test:
+
+1. **Clear boundary:** the function cluster, subsystem, artifact, or hypothesis can be investigated without another worker continuously changing its meaning.
+2. **Cohesive objective:** the Task owns a meaningful analytical result, not a tiny instruction such as reading one xref or renaming one variable.
+3. **Portable context:** the Task spec and bounded artifacts contain enough local facts for the worker to perform at full quality without carrying the coordinator's entire global history.
+
+When all three hold, strongly prefer more dispatches over keeping ready analysis in the coordinator or serializing it behind an unrelated worker. Create and start every ready Task before the first wait, use the available safe concurrency, and dispatch the next ready Task as capacity returns. Several workers may use the same model when their scopes are genuinely independent.
+
+Good fan-out boundaries include independent function clusters, receive/send/dispatch paths, unrelated message families, separate binaries or artifacts, and competing hypotheses evaluated read-only. Bundle tightly coupled steps into one larger Task when they repeatedly need the same local state.
+
+Stop widening the wave when a proposed split would create micro-tasks, require lossy or very large context transfer, introduce a real dependency on unfinished findings, duplicate most of another worker's analysis, or create overlapping mutations. Coordinator bookkeeping alone is not a reason to avoid otherwise useful fan-out.
 
 ## Run the supervised Orca loop
 

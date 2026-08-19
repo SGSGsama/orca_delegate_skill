@@ -1,6 +1,6 @@
 ---
 name: orca-software-development
-description: Use Orca by default for non-trivial software work, including feature implementation, bug diagnosis or fixes, refactoring, tests, reviews, and multi-file or multi-component changes. Trigger whenever work needs repository exploration plus code changes, contains two or more separable steps or concerns, has an unknown cause, or needs both implementation and verification; also trigger on requests for parallel, multi-agent, Terra/Luna, or Orca execution. A coordinator must delegate bounded execution and retain design, review, and acceptance. Exclude only a single obvious local edit or a read-only explanation.
+description: Use Orca by default for non-trivial software work, including feature implementation, bug diagnosis or fixes, refactoring, tests, reviews, and multi-file or multi-component changes. Trigger whenever work needs repository exploration plus code changes, contains two or more separable steps or concerns, has an unknown cause, or needs both implementation and verification; also trigger on requests for parallel, multi-agent, Terra/Luna, or Orca execution. A coordinator must delegate bounded execution, favor broad safe fan-out when modules and context permit, and retain design, review, and acceptance. Exclude only a single obvious local edit or a read-only explanation.
 ---
 
 # Orca Software Development
@@ -64,6 +64,20 @@ Create tasks whose contracts a worker can verify independently. Include files/di
 Read [references/task-templates.md](references/task-templates.md) when drafting implementation, diagnosis, test, review, or repair tasks.
 
 Create every independent Task before starting workers so one parallel wave can start before waiting. Add dependencies for actual ordering constraints. Parallel tasks must have non-overlapping writable scopes, or be explicitly read-only. Do not send implementation and tests to separate workers when both must repeatedly edit the same core files.
+
+## Favor broad, useful fan-out
+
+For every candidate workstream, apply this three-part test:
+
+1. **Clear boundary:** the module, component, file ownership, or read-only investigation scope has a stable interface to the rest of the change.
+2. **Cohesive objective:** the Task owns a meaningful deliverable with its own acceptance criteria, not a tiny implementation fragment or isolated command.
+3. **Portable context:** repository instructions, relevant contracts, and bounded code context can be included without omitting global decisions that materially affect worker quality.
+
+When all three hold, strongly prefer more dispatches over keeping ready implementation or diagnosis in the coordinator or serializing it behind unrelated work. Create and start every ready Task before the first wait, use the available safe concurrency, and dispatch the next ready Task as capacity returns. Several workers may use the same model when their scopes are genuinely independent.
+
+Good fan-out boundaries include separate modules with stable interfaces, independent adapters, unrelated bug investigations, distinct migration batches, read-only review surfaces, and tests whose writable scope does not overlap implementation. Bundle implementation and tests into one Task when they require repeated edits to the same core files or rapid shared feedback.
+
+Stop widening the wave when a proposed split would create micro-tasks, require lossy or very large context transfer, depend on an unfinished contract or design decision, duplicate most of another worker's work, or introduce overlapping writes. Coordinator bookkeeping alone is not a reason to avoid otherwise useful fan-out.
 
 ## Choose placement
 
