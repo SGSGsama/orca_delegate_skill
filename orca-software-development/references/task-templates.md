@@ -2,9 +2,12 @@
 
 Read only the template matching the next bounded task. Replace every angle-bracket placeholder and remove irrelevant fields before dispatch.
 
+For implementation tasks, choose the Luna profile for a precise mechanical contract or replace it with `[worker-profile: agent=codex model=gpt-5.6-terra effort=xhigh]` when substantial local reasoning remains. Keep the selected profile as the first line of the final Task spec.
+
 ## Implementation
 
 ```text
+[worker-profile: agent=codex model=gpt-5.6-luna effort=max]
 Objective: Implement <behavior>.
 Writable scope: <files/directories>.
 Must preserve: <public APIs, compatibility, invariants>.
@@ -19,6 +22,7 @@ Return: changed files; design choices; validation results; remaining risks.
 ## Diagnosis only
 
 ```text
+[worker-profile: agent=codex model=gpt-5.6-terra effort=xhigh]
 Objective: Find the root cause of <failure>; do not implement a fix.
 Scope: <components/files/tests/logs>.
 Reproduction: <command and expected/actual result>.
@@ -30,6 +34,7 @@ Return: root cause with evidence; confidence; ruled-out alternatives; proposed f
 ## Tests only
 
 ```text
+[worker-profile: agent=codex model=gpt-5.6-luna effort=max]
 Objective: Add tests that demonstrate <contract/regression>.
 Writable scope: <test files/fixtures only>.
 Production code must not change.
@@ -41,6 +46,7 @@ Return: tests added; what each proves; observed failures or passes; fixture chan
 ## Review only
 
 ```text
+[worker-profile: agent=codex model=gpt-5.6-terra effort=xhigh]
 Objective: Review <diff/commit/files> against <requirement>.
 Read-only: do not edit files.
 Check: correctness, regressions, API/behavior compatibility, error paths, concurrency, security, and missing tests as relevant.
@@ -50,6 +56,7 @@ Return findings ordered by severity, each with file/line evidence and a concrete
 ## Narrow repair
 
 ```text
+[worker-profile: agent=codex model=gpt-5.6-luna effort=max]
 Objective: Fix the accepted finding <finding ID/summary>.
 Writable scope: <smallest file set>.
 Required behavior: <correct outcome>.

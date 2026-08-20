@@ -57,6 +57,28 @@ Use `gpt-5.6-terra` with `xhigh` effort when a bounded task still needs substant
 
 Keep global architecture, public API design, cross-module contracts, major data-model changes, global concurrency decisions, conflicts between findings, and final acceptance with the coordinator. If those decisions are unresolved, investigate first instead of dispatching an underspecified implementation.
 
+## Persist model and effort across long runs
+
+Treat the worker profile as part of the Task contract, not coordinator memory. Every Task spec must begin with exactly one of these lines:
+
+```text
+[worker-profile: agent=codex model=gpt-5.6-luna effort=max]
+[worker-profile: agent=codex model=gpt-5.6-terra effort=xhigh]
+```
+
+Choose one line, never both. Keeping it first makes the profile visible in brief task listings after long waits or context compaction.
+
+Before every initial launch, capacity-refill launch, replacement, or retry:
+
+1. recover the profile from the persisted Task spec rather than memory;
+2. for a fresh terminal, pass both the exact `--model` and `--effort` values to `worker-start`;
+3. inspect the returned receipt and require `launch.requested` and `launch.effective` to match the Task profile;
+4. if the profile is unsupported or mismatched, treat the launch as failed and follow its typed recovery guidance; never retry by omitting or lowering effort.
+
+`--retry-of` does not inherit the prior profile, so repeat the exact model and effort explicitly. Reuse with `worker-start --terminal` only when the previous Dispatch receipt proves that exact terminal already has the same effective model and effort; model and effort flags cannot be combined with `--terminal`. If the next Task needs a different profile, release the terminal and start a fresh worker.
+
+After a timeout, long worker run, context compaction, coordinator restart, or resumed orchestration loop, re-read Task specs and active Dispatch receipts before launching more work. Never silently fall back to agent defaults.
+
 ## Build bounded tasks
 
 Create tasks whose contracts a worker can verify independently. Include files/directories in scope, behavior, interfaces allowed or forbidden to change, invariants, error behavior, compatibility constraints, acceptance criteria, and exact validation commands. Record whether the task is implementation, diagnosis-only, tests-only, review-only, or documentation.
@@ -91,7 +113,7 @@ Create one Run for the objective, unless the session is already bound to the cor
 
 ```text
 <ORCA_CLI> orchestration run-create --objective "<global development objective>" --json
-<ORCA_CLI> orchestration task-create --spec "<bounded worker contract>" --json
+<ORCA_CLI> orchestration task-create --spec "[worker-profile: agent=codex model=gpt-5.6-luna effort=max] <bounded worker contract>" --json
 ```
 
 Start workers with the preferred composed path and retain the returned Task and Dispatch IDs:
@@ -100,6 +122,8 @@ Start workers with the preferred composed path and retain the returned Task and 
 <ORCA_CLI> orchestration worker-start --task <task_id> --worktree current --agent codex --model gpt-5.6-luna --effort max --json
 <ORCA_CLI> orchestration worker-start --task <task_id> --worktree current --agent codex --model gpt-5.6-terra --effort xhigh --json
 ```
+
+Use the command matching the Task's persisted profile and verify the launch receipt before counting the worker as started.
 
 Verify provenance when needed:
 
