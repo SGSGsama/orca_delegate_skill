@@ -1,6 +1,14 @@
 ---
 name: orca-reverse-engineering
-description: Use Orca by default for reverse-engineering requests involving unknown compiled code, binaries, APKs or native libraries, multiple functions, protocols, data structures, decompiler output, or evidence cross-checking. Trigger whenever there are two or more separable analysis questions or targets, the scope is initially unknown, or the user asks for comprehensive, parallel, multi-agent, or Orca analysis. A coordinator must delegate bounded investigation to Terra or Luna, favor broad safe fan-out when modules and context permit, and synthesize the evidence. Exclude only a single trivial read-only lookup requiring no broader code exploration.
+description: >-
+  Use Orca for reverse-engineering work whose scope, uncertainty, or
+  parallelism justifies delegation: unknown function clusters, protocols,
+  structures, multiple artifacts or hypotheses, and requests for
+  comprehensive, parallel, multi-agent, or Orca analysis. Let the primary
+  coordinator agent directly answer a bounded read-only lookup when the exact
+  location, single question, and evidence path are already clear. When
+  delegating, send cohesive investigations with shared binary and project
+  context so workers do not repeat global discovery.
 ---
 
 # Orca Reverse Engineering
@@ -13,18 +21,22 @@ Use Orca's structured orchestration for every delegated worker. Never substitute
 - Otherwise act as the coordinator. Own the global model, task decomposition, synthesis, disputed conclusions, accepted naming/types, and final answer.
 - A direct user instruction always takes precedence over an inherited worker role. Do not reuse lifecycle IDs from a settled Dispatch.
 
-## Mandatory delegation gate
+## Decide whether the primary coordinator agent should analyze directly
 
-When this skill is selected in coordinator mode, delegation is the default action, not an optional optimization. Inspect only enough raw material to identify boundaries and write the first Task; then create the Run and start at least one Orca worker before doing detailed function analysis, protocol reconstruction, bulk xref review, renaming, typing, or analysis-database mutation.
+Before creating a Run, the primary coordinator agent may inspect target metadata, perform up to three targeted symbol/string/address searches, and open the named function plus its immediate references. Use that bounded reconnaissance to choose one path.
 
-Delegation is mandatory when any of these is true:
+Use the **primary-coordinator fast path** only when all six conditions hold:
 
-- the request contains two or more functions, artifacts, hypotheses, or independent questions;
-- the scope or root behavior is not yet known;
-- the work combines discovery with propagation, documentation, or verification;
-- the user asks for a thorough, comprehensive, parallel, multi-agent, Terra/Luna, or Orca investigation.
+1. the request asks one precise semantic or factual question;
+2. the exact binary, function, address, symbol, or artifact is already known or found by the bounded reconnaissance;
+3. the evidence is confined to one function/artifact and its immediate callers, callees, or xrefs;
+4. no competing hypothesis, protocol/state-machine recovery, object-layout inference, crypto/serialization reconstruction, or cross-artifact correlation is required;
+5. the work is read-only and needs no broad naming, typing, annotation, or documentation propagation;
+6. there is no independent investigation whose delegation benefit exceeds the context-preparation and launch cost.
 
-Coordinator-only execution is allowed only when all of these are true: the request names one exact fact or location, is read-only, has one obvious inspection operation, and needs no caller/callee or cross-artifact exploration. If uncertain, delegate. The coordinator's ability to perform the analysis itself is not a reason to skip Orca.
+When all six hold, the primary coordinator agent answers the lookup directly. Delegate when any condition fails, the target remains uncertain, or the question expands beyond the bounded evidence path. Convert the reconnaissance results into the shared context packet instead of making every worker rediscover them.
+
+An explicit user request for Orca, Terra/Luna, parallel work, multi-agent supervision, or comprehensive investigation overrides the fast path and requires delegation.
 
 ## Load the current Orca contract
 
@@ -38,7 +50,7 @@ Treat that live guide as authoritative if any command below has changed. Do not 
 
 ## Coordinator model
 
-The coordinator (typically Sol when the workflow is launched with a model choice) keeps the compact, global understanding. Do not restart or replace an existing coordinator merely to change its model.
+The primary coordinator agent keeps the compact, global understanding. Do not restart or replace an existing coordinator merely to change its model.
 
 - objective and subsystem boundaries
 - accepted facts versus hypotheses
@@ -47,7 +59,7 @@ The coordinator (typically Sol when the workflow is launched with a model choice
 - contradictions, confidence, and evidence gaps
 - the next highest-value investigation
 
-Keep raw pseudocode, disassembly, traces, and repetitive inspection in workers unless exact evidence is needed to settle a claim.
+On the primary-coordinator fast path, inspect the bounded evidence directly. On the delegated path, keep raw pseudocode, disassembly, traces, and repetitive inspection in workers unless exact evidence is needed to settle a claim.
 
 ## Route work
 
@@ -85,7 +97,7 @@ Inspect enough of the target to identify separable functions, regions, or hypoth
 
 Read [references/task-templates.md](references/task-templates.md) when drafting a function, structure, protocol, contradiction-resolution, or propagation task.
 
-Create all independent Tasks before starting their workers so they can run as one parallel wave. Use dependencies for real ordering constraints. Avoid two workers mutating the same analysis database or output file unless independent verification is intentional and writes are disabled.
+Create all independent Tasks before starting their workers so they can run as one parallel wave. Use dependencies for real ordering constraints. Avoid two workers mutating the same analysis database or output file unless independent verification is intentional and writes are disabled. Do not split local discovery, hypothesis testing, evidence collection, and conclusions into separate Tasks when they repeatedly require the same function cluster and artifacts.
 
 ## Favor broad, useful fan-out
 
@@ -99,7 +111,25 @@ When all three hold, strongly prefer more dispatches over keeping ready analysis
 
 Good fan-out boundaries include independent function clusters, receive/send/dispatch paths, unrelated message families, separate binaries or artifacts, and competing hypotheses evaluated read-only. Bundle tightly coupled steps into one larger Task when they repeatedly need the same local state.
 
-Stop widening the wave when a proposed split would create micro-tasks, require lossy or very large context transfer, introduce a real dependency on unfinished findings, duplicate most of another worker's analysis, or create overlapping mutations. Coordinator bookkeeping alone is not a reason to avoid otherwise useful fan-out.
+Stop widening the wave when a proposed split would create micro-tasks, require lossy or very large context transfer, introduce a real dependency on unfinished findings, duplicate most of another worker's analysis, create overlapping mutations, or cost as much context preparation as direct analysis. Coordinator bookkeeping alone is not a reason to avoid otherwise useful fan-out.
+
+## Build and reuse shared reverse-engineering context
+
+Pay global discovery cost once per Run. Before dispatching detailed investigations, create a compact shared context packet containing:
+
+- the global question, target identities, formats, architecture, and tool/database locations;
+- accepted subsystem boundaries, call paths, known structures, state, constants, and naming decisions;
+- important entry points, xrefs, traces, strings, captures, and already-tested hypotheses;
+- mutation ownership, writable artifacts, and conclusions that remain provisional;
+- the exact commands or tool views workers should use to reach the local evidence.
+
+Keep it focused on facts workers would otherwise have to rediscover. Prefer an inline packet for remote or uncertain placement. A shared report path is acceptable only when every target worker is proven to share that filesystem; include a short inline fallback summary even then.
+
+Every Task must include the shared packet or reference, exact local starting points, and the delta question it owns. Workers should accept coordinator-approved facts, inspect only task-local unknowns, and report contradictions rather than repeating global reconnaissance. Update the packet after each synthesis wave before creating later Tasks.
+
+If the primary coordinator agent cannot build a reliable packet within the bounded reconnaissance, dispatch one read-only Terra scout Task to map the relevant binaries, functions, call paths, artifacts, and tool entry points. Synthesize that result into the packet before launching detailed workers; do not launch several workers to repeat the same global discovery.
+
+Make a Task an end-to-end context unit: local exploration, hypothesis testing, evidence collection, and conclusion belong to the same worker when they use the same function cluster or artifacts. Keep its Dispatch active for multi-round `send` and `ask/reply`; do not request `worker_done` until that cohesive investigation is complete. If an immediate follow-up uses the same context and the same verified worker profile, reuse the exact terminal. Start a fresh worker only for an independent context unit, a different required profile, or a settled worker that cannot be safely reused.
 
 ## Run the supervised Orca loop
 
@@ -134,7 +164,7 @@ Wait for structured lifecycle messages, not a fixed number of batches:
 <ORCA_CLI> orchestration check --wait --types worker_done,escalation,question --timeout-ms 900000 --json
 ```
 
-Process every message in the returned Delivery. Answer worker questions with `orchestration reply --id <message_id> --body "<answer>" --json`. A timeout is only a checkpoint; if the Dispatch is still live, continue rolling waits. Use bounded `worker-show` or `worker-read` only when liveness or evidence needs inspection. Do not infer completion from terminal idleness or heartbeat.
+Process every message in the returned Delivery. Answer worker questions with `orchestration reply --id <message_id> --body "<answer>" --json`. While a cohesive Task is active, send clarifications to `dispatch:<dispatch_id>` instead of creating another Task for the next conversational turn. A timeout is only a checkpoint; if the Dispatch is still live, continue rolling waits. Use bounded `worker-show` or `worker-read` only when liveness or evidence needs inspection. Do not infer completion from terminal idleness or heartbeat.
 
 For every accepted `worker_done`, inspect the finding and choose one before acknowledging the Delivery:
 
@@ -170,4 +200,4 @@ Return concise findings rather than raw dumps. Include conclusion, evidence with
 
 ## Finish
 
-Account for every Dispatch, verify any persistent analysis-database or documentation mutations, and present the global reconstruction separately from unresolved hypotheses. Do not claim a worker was Orca-orchestrated unless its Task and Dispatch exist.
+On the fast path, report the bounded answer and its evidence. On the delegated path, account for every Dispatch, verify any persistent analysis-database or documentation mutations, and present the global reconstruction separately from unresolved hypotheses. Do not claim a worker was Orca-orchestrated unless its Task and Dispatch exist.

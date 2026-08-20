@@ -1,6 +1,14 @@
 ---
 name: orca-software-development
-description: Use Orca by default for non-trivial software work, including feature implementation, bug diagnosis or fixes, refactoring, tests, reviews, and multi-file or multi-component changes. Trigger whenever work needs repository exploration plus code changes, contains two or more separable steps or concerns, has an unknown cause, or needs both implementation and verification; also trigger on requests for parallel, multi-agent, Terra/Luna, or Orca execution. A coordinator must delegate bounded execution, favor broad safe fan-out when modules and context permit, and retain design, review, and acceptance. Exclude only a single obvious local edit or a read-only explanation.
+description: >-
+  Use Orca for software work whose reasoning, scope, or parallelism justifies
+  delegation: unknown-cause bugs, cross-module features or refactors,
+  substantial tests or reviews, and requests for parallel, multi-agent,
+  Terra/Luna, or Orca execution. Let the primary coordinator agent directly
+  complete a small localized edit when its location, behavior, patch scope,
+  and focused validation are already clear. When delegating, send cohesive
+  end-to-end Tasks with shared project context so workers do not rediscover
+  the repository.
 ---
 
 # Orca Software Development
@@ -13,19 +21,24 @@ Use Orca's structured orchestration for every delegated worker. Never substitute
 - Otherwise act as the coordinator. Own requirements, architecture, task boundaries, integration, review, and final acceptance.
 - A direct user instruction always takes precedence over an inherited worker role. Do not reuse lifecycle IDs from a settled Dispatch.
 
-## Mandatory delegation gate
+## Decide whether the primary coordinator agent should edit directly
 
-When this skill is selected in coordinator mode, the coordinator must delegate implementation and diagnosis through Orca. It may inspect repository instructions and enough code to define contracts, but it must create the Run and start at least one worker before editing production or test code.
+Before creating a Run, the primary coordinator agent may read repository instructions, perform up to three targeted searches, open the directly implicated files, and reproduce one focused failure. Use that bounded reconnaissance to choose one path.
 
-Delegation is mandatory when any of these is true:
+Use the **primary-coordinator fast path** only when all six conditions hold:
 
-- more than one file, component, behavior, or verification concern may be affected;
-- the root cause or implementation approach requires exploration;
-- the request is a feature, non-local bug fix, refactor, test-and-implementation change, or code review followed by repair;
-- meaningful implementation, testing, review, or documentation tasks can be separated;
-- the user asks for thorough, parallel, multi-agent, Terra/Luna, or Orca execution.
+1. the requested behavior and acceptance result are unambiguous;
+2. the edit location is already known or found by the bounded reconnaissance;
+3. the expected patch is localized to one cohesive file, or at most two tightly coupled files, and 40 changed lines or fewer excluding generated/formatting churn;
+4. no root-cause discovery, public API/schema change, new dependency, data-model migration, concurrency redesign, or security-sensitive reasoning is required;
+5. one targeted test or validation command can establish completion;
+6. there is no independent workstream whose delegation benefit exceeds the cost of preparing context and launching a worker.
 
-Coordinator-only implementation is allowed only when all of these are true: one already-identified file, one obvious local change, no debugging or design decision, no public interface or behavioral ambiguity, and one direct validation command. If uncertain, delegate. Once this skill has triggered, the coordinator does not write routine implementation code merely because it can; even small review repairs go to a narrow Luna Task unless the user explicitly asks the coordinator to edit them.
+When all six hold, the primary coordinator agent owns the complete inspect-edit-validate loop and does not delegate. Typical examples are a typo or constant correction, one local guard, a narrowly specified configuration change, or updating one implementation and its tightly coupled expectation.
+
+Delegate when any condition fails, the bounded reconnaissance does not locate the change, or the work expands beyond the estimate. Stop the fast path before broad edits and convert the discovered facts into the shared context packet. Typical delegated work includes unknown-cause failures, cross-module behavior, new interfaces, migrations, concurrency, broad refactors, and multiple genuinely independent deliverables.
+
+An explicit user request for Orca, Terra/Luna, parallel work, or multi-agent supervision overrides the fast path and requires delegation.
 
 ## Load the current Orca contract
 
@@ -39,7 +52,7 @@ Treat that live guide as authoritative if any command below has changed. Do not 
 
 ## Coordinator model
 
-The coordinator (typically Sol when the workflow is launched with a model choice) first inspects repository instructions and the relevant code, then owns the items below. Do not restart or replace an existing coordinator merely to change its model.
+The primary coordinator agent first inspects repository instructions and the relevant code, then owns the items below. Do not restart or replace an existing coordinator merely to change its model.
 
 - requirement interpretation and acceptance criteria
 - architecture, public APIs, cross-module contracts, and data model
@@ -47,7 +60,7 @@ The coordinator (typically Sol when the workflow is launched with a model choice
 - task dependency and writable-scope boundaries
 - review, integration, test strategy, and final acceptance
 
-Keep routine implementation and local debugging in bounded workers. The coordinator inspects, specifies, schedules, reviews, and integrates; workers own code edits.
+On the primary-coordinator fast path, the coordinator owns the complete edit. On the delegated path, the coordinator inspects, specifies, schedules, reviews, and integrates while workers own routine implementation and local debugging.
 
 ## Route work
 
@@ -85,7 +98,7 @@ Create tasks whose contracts a worker can verify independently. Include files/di
 
 Read [references/task-templates.md](references/task-templates.md) when drafting implementation, diagnosis, test, review, or repair tasks.
 
-Create every independent Task before starting workers so one parallel wave can start before waiting. Add dependencies for actual ordering constraints. Parallel tasks must have non-overlapping writable scopes, or be explicitly read-only. Do not send implementation and tests to separate workers when both must repeatedly edit the same core files.
+Create every independent Task before starting workers so one parallel wave can start before waiting. Add dependencies for actual ordering constraints. Parallel tasks must have non-overlapping writable scopes, or be explicitly read-only. Do not split local exploration, implementation, tests, and ordinary repair into separate Tasks when one worker needs the same context for the entire loop.
 
 ## Favor broad, useful fan-out
 
@@ -99,7 +112,25 @@ When all three hold, strongly prefer more dispatches over keeping ready implemen
 
 Good fan-out boundaries include separate modules with stable interfaces, independent adapters, unrelated bug investigations, distinct migration batches, read-only review surfaces, and tests whose writable scope does not overlap implementation. Bundle implementation and tests into one Task when they require repeated edits to the same core files or rapid shared feedback.
 
-Stop widening the wave when a proposed split would create micro-tasks, require lossy or very large context transfer, depend on an unfinished contract or design decision, duplicate most of another worker's work, or introduce overlapping writes. Coordinator bookkeeping alone is not a reason to avoid otherwise useful fan-out.
+Stop widening the wave when a proposed split would create micro-tasks, require lossy or very large context transfer, depend on an unfinished contract or design decision, duplicate most of another worker's work, introduce overlapping writes, or cost as much context preparation as doing the work directly. Coordinator bookkeeping alone is not a reason to avoid otherwise useful fan-out.
+
+## Build and reuse shared project context
+
+Pay repository-discovery cost once per Run. Before dispatching implementation workers, create a compact shared context packet containing:
+
+- the user objective and accepted architecture or API decisions;
+- applicable repository instructions and important user-owned uncommitted changes;
+- a small module map naming relevant files, symbols, interfaces, and dependencies;
+- established facts, rejected assumptions, writable boundaries, and forbidden changes;
+- exact build, test, lint, or reproduction commands already discovered.
+
+Keep it focused on decisions workers would otherwise have to rediscover. Prefer an inline packet in each Task spec for remote or uncertain placement. A shared report path is acceptable only when every target worker is proven to share that filesystem; include a short inline fallback summary even then.
+
+Every Task must include the shared packet or reference, plus exact local starting points. Workers should trust accepted decisions, inspect only task-local unknowns, and avoid broad repository exploration unless they find contradictory evidence. After each wave, update the packet with accepted findings before creating later Tasks.
+
+If the primary coordinator agent cannot build a reliable packet within the bounded reconnaissance, dispatch one read-only Terra scout Task to map the relevant modules, contracts, tests, and commands. Synthesize that result into the packet before launching implementation workers; do not launch several workers to repeat the same global discovery.
+
+Make a Task an end-to-end context unit: local inspection, implementation, targeted tests, and ordinary repair belong to the same worker when they touch the same module and decisions. Keep its Dispatch active for multi-round `send` and `ask/reply`; do not request `worker_done` until that cohesive objective is complete. If an immediate follow-up uses the same context and the same verified worker profile, reuse the exact terminal. Start a fresh worker only for an independent context unit, a different required profile, or a settled worker that cannot be safely reused.
 
 ## Choose placement
 
@@ -138,7 +169,7 @@ Wait for lifecycle messages rather than continuously reading terminals:
 <ORCA_CLI> orchestration check --wait --types worker_done,escalation,question --timeout-ms 900000 --json
 ```
 
-Process every message in the returned Delivery. Answer worker questions with `orchestration reply --id <message_id> --body "<answer>" --json`. A timeout is only a checkpoint; if the Dispatch is live, continue rolling waits. Use bounded `worker-show` or `worker-read` only to inspect liveness or evidence. Do not infer completion from TUI idleness or heartbeat.
+Process every message in the returned Delivery. Answer worker questions with `orchestration reply --id <message_id> --body "<answer>" --json`. While a cohesive Task is active, send clarifications to `dispatch:<dispatch_id>` instead of creating another Task for the next conversational turn. A timeout is only a checkpoint; if the Dispatch is live, continue rolling waits. Use bounded `worker-show` or `worker-read` only to inspect liveness or evidence. Do not infer completion from TUI idleness or heartbeat.
 
 For every accepted `worker_done`, inspect the result and choose one before acknowledging the Delivery:
 
@@ -175,4 +206,4 @@ Use the exact `worker_done` command and IDs injected by Orca, with explicit `--o
 
 ## Finish
 
-Account for every Dispatch, run final integration validation, and report the accepted outcome plus any unresolved risks. Do not claim a worker was Orca-orchestrated unless its Task and Dispatch exist.
+On the fast path, run the focused validation and report the local change. On the delegated path, account for every Dispatch, run final integration validation, and report the accepted outcome plus any unresolved risks. Do not claim a worker was Orca-orchestrated unless its Task and Dispatch exist.
