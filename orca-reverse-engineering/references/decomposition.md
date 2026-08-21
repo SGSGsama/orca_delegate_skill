@@ -1,121 +1,129 @@
 # Reverse-Engineering Decomposition
 
-Load this file only when triage, investigation boundaries, routing, or safe parallelism are not already obvious.
+Load this file when routing, investigation boundaries, evidence flow, or safe parallelism is not already obvious.
 
-## 1. Triage
+## 1. Route by reverse-engineering work shape
 
-Choose the smallest reliable investigation shape.
+Choose roles from semantic coupling, target locality, input volume, mutability, and falsifiability. The examples below illustrate the dimensions; they are not a closed task catalog.
 
-### Direct coordinator
+### Primary coordinator: global semantic and adversarial work
 
-Use when all are true:
+Prefer direct primary-coordinator ownership when the hard part is the global interpretation itself:
 
-- the request asks one precise semantic or factual question;
-- bounded reconnaissance locates the exact binary, function, address, symbol, or artifact;
-- the evidence path is limited to one function/artifact and immediate callers, callees, or xrefs;
-- no competing hypothesis, protocol/state-machine recovery, object-layout inference, crypto/serialization reconstruction, or cross-artifact correlation is required;
-- the work is read-only and requires no broad naming, typing, annotation, or documentation propagation;
-- delegation would cost at least as much context preparation as direct evidence recovery.
+- reconstructing an algorithm, end-to-end control/data flow, protocol behavior, or system-wide state model;
+- reasoning about complex obfuscation, virtualization, anti-analysis, integrity checks, opaque dispatch, or other protection/countermeasure interactions;
+- correlating many functions, subsystems, binaries, captures, or competing global hypotheses;
+- defining the evidence standard, accepted vocabulary, mutation policy, or behavioral validation oracle;
+- resolving contradictions that would change the global model;
+- synthesizing local results into the requested reconstruction and validating it against observable behavior.
 
-Stop the direct path once broad discovery, competing explanations, or cross-subsystem synthesis becomes necessary.
+The coordinator may inspect code, IL, traces, or artifacts directly whenever that is the clearest way to solve the semantic core. Delegate supporting evidence work without delegating away the global reasoning that makes the result coherent.
 
-### Single worker
+### Terra: bounded local semantics
 
-Prefer one worker when the same local mental model is needed for function-cluster exploration, hypothesis testing, evidence collection, and conclusion. Do not manufacture separate xref-reader, decompiler, and evidence-writer Tasks for one cohesive cluster.
+Use Terra for a precise function or tightly coupled local cluster whose meaning can be concluded with bounded context:
 
-### Multi-agent
+- function purpose, inputs/outputs, side effects, error paths, callers/callees, and local data/control flow;
+- a localized structure layout, field use, state transition, parser stage, serializer stage, indirect call, or optimized routine;
+- a precise local hypothesis test, contradiction check, type/name proposal, or difficult decompiler/IL interpretation;
+- local validation needed by a coordinator-owned global algorithm or protection analysis.
 
-Use when there are multiple independently falsifiable outcomes, separate artifacts or function clusters, read-only competing hypotheses, or one global mapping/contract phase can unlock several stable investigations.
+Keep exploration, hypothesis testing, evidence collection, and conclusion together. Reuse the same Terra terminal for adjacent questions sharing the same target context. If the conclusion expands into system-wide algorithm or adversarial reasoning, return the local evidence and escalate the global interpretation instead of independently rediscovering the whole target.
 
-## 2. Build Run Context once
+### Luna: high-volume evidence processing
 
-Keep a compact shared packet or reference with:
+Use Luna when input volume and repetitive evidence handling dominate:
+
+- logs, runtime traces, packet captures, crash/event streams, memory or register dumps, and large tool exports;
+- large string, xref, constant, import/export, call-edge, candidate-function, or sample sets;
+- corpus or version comparison, coverage accounting, repetitive classification, search, filtering, normalization, and report compaction;
+- applying an accepted mapping across names, types, comments, annotations, or other bounded mutations;
+- broad counterexample or anomaly search under an already stated hypothesis and evidence schema.
+
+A Luna Task must identify the input manifest, extraction/classification schema, coverage requirement, exception policy, and output index. It returns references, counts, clusters, and anomalies rather than copying raw input. If an item requires non-local semantic judgment, preserve the evidence and flag it for Terra or the primary coordinator.
+
+### Multi-agent Run
+
+Use a mixed Run when these transforms are genuinely useful together: Luna reduces large inputs into indexed evidence, Terra resolves bounded local meanings, and the primary coordinator reconstructs global algorithms, behavior, or protection logic. Skip any stage that would merely re-read another role's work without adding evidence.
+
+## 2. Build context in three layers
+
+### Global model
+
+Owned by the primary coordinator:
 
 ```text
-Global objective and requested output
-Artifact identities, hashes, architecture, formats, and base revisions
-Tool, database, session, trace, capture, and project locations
-Accepted subsystem/function map and important entry points
-Accepted names, types, offsets, constants, state, and protocol facts
-Evidence index with addresses/functions/artifact references
-Tested and rejected hypotheses
+Objective and requested output
+Artifact identities, hashes, architecture, formats, and revisions
+Subsystem/function map and important entry points
+Accepted global behavior, vocabulary, and evidence standard
+Global hypotheses, contradictions, and protection assumptions
 Mutation ownership and forbidden changes
-Known commands, scripts, tool views, and reproducible queries
-Open global questions
+Tool/database/session locations and reproducible commands
 Context version/digest
 ```
 
-Workers receive task-local starting points plus this reference. Update later waves with deltas: accepted facts, rejected hypotheses, interpretation changes, new evidence, invalidated assumptions, and mutation results.
+### Evidence index
 
-If this packet cannot be built without broad exploration, dispatch exactly one read-only Terra scout first.
-
-## 3. Decompose by falsifiable outcome
-
-A good Task owns:
-
-- one meaningful analytical result;
-- one worker profile;
-- one cohesive local evidence context;
-- one bounded target plus read/mutation scope;
-- explicit known facts and competing hypotheses;
-- exact evidence and acceptance requirements;
-- a clear escalation boundary.
-
-Bad split:
+Usually produced or extended by Luna:
 
 ```text
-T1 decompile handler_A
-T2 list xrefs for handler_A
-T3 write the conclusion
+Input manifest and processed coverage
+Stable event/address/function/sample identifiers
+Extracted facts, clusters, counts, and candidate anomalies
+Raw-source references for drill-down
+Skipped, malformed, or ambiguous items
+Schema/version and reproducible extraction command
 ```
 
-Better split:
+### Local target packet
+
+Given to Terra:
 
 ```text
-T0 freeze accepted message IDs, entry points, and evidence vocabulary
-T1 reconstruct receive/decode path with local hypothesis tests and evidence
-T2 independently reconstruct send/encode path under the accepted vocabulary
-T3 synthesize message layout and resolve asymmetric observations
+Exact functions/addresses/trace ranges/tool views
+One local semantic question and competing hypotheses
+Relevant global facts and vocabulary
+Only the evidence-index slices needed for this target
+Required local evidence and acceptance standard
+Mutation scope, if any
+Prior local conclusion and delta for terminal reuse
 ```
 
-## 4. Routing
+Do not make every Terra worker load the full binary history or entire logs. Do not ask Luna to rediscover global meaning while processing bulk input. Update global context with accepted deltas rather than coordinator transcripts.
 
-### Primary coordinator agent
+## 3. Decompose by evidence transformation
 
-Use when a global decision is actually needed:
+A good delegated Task performs one independently checkable transformation:
 
-- complex initial decomposition;
-- subsystem boundaries or global target map;
-- protocol-wide interpretation or shared structure contract;
-- material interpretation or mutation-policy change;
-- conflict between worker findings;
-- aggregate medium/high-risk synthesis.
+```text
+bulk raw inputs --Luna--> indexed evidence and coverage
+bounded target + evidence slice --Terra--> local semantic conclusion
+local conclusions + global evidence --primary coordinator--> algorithm/behavior/adversarial synthesis
+```
 
-A high-tier coordinator decision or synthesis must produce a TaskGraphLite, Decision Record, revised interpretation contract, conflict resolution, or synthesis verdict.
+This is a routing model, not a mandatory linear pipeline. The coordinator may directly solve global work, Luna and Terra Tasks may run independently, and a single worker may be enough. Avoid separate decompiler, xref-reader, and report-writer Tasks when they share one local question.
 
-### Terra Max
+## 4. Routing corrections
 
-Use for ambiguous functions, nontrivial data flow, object layouts, local state machines, parsers, crypto, serialization, optimized code, indirect calls, trace interpretation, difficult tool output, or hypothesis testing whose boundary may expand.
+| New condition | Route |
+|---|---|
+| Ordinary evidence gap inside one local target | Same Terra, delta-only follow-up |
+| Local target expands to adjacent tightly coupled functions | Same Terra if context remains bounded |
+| Local result changes the global algorithm or protection model | Primary coordinator |
+| More logs/traces/dumps/candidates are needed | Luna bulk evidence pass |
+| Bulk evidence exposes a precise semantic anomaly | Terra for local meaning; coordinator if globally coupled |
+| Accepted mapping needs broad propagation | Luna batch |
+| Cross-target contradiction or evidence-policy change | Primary coordinator |
 
-### Luna Max
-
-Use for constrained wrappers/thunks, repetitive classification, constant/xref extraction, applying an accepted structure, approved name/type/comment propagation, documentation, and result/checkpoint compaction.
+Changing workers unnecessarily repays artifact loading, tool orientation, decompilation, and target-understanding cost.
 
 ## 5. Safe parallelism
 
-Run Tasks concurrently only when all are true:
+Parallelize Luna batches when their input sources or output partitions are independent and share one frozen schema. Parallelize Terra analyses when local targets are independently falsifiable and do not depend on unaccepted interpretations. Do not parallelize mutations against the same analysis database, GUI session, trace store, or output file without proven isolation and merge semantics.
 
-1. dependency prerequisites are complete;
-2. shared names, types, protocol vocabulary, and interpretation contracts are stable;
-3. target and mutation scopes do not overlap;
-4. one task does not require another task's unaccepted conclusion;
-5. shared analysis databases, GUI sessions, trace sources, and output files are read-only or proven safe for concurrent access;
-6. each task has independent acceptance evidence.
-
-Do not use Git worktrees as a substitute for isolating an external GUI session or mutable analysis database. Serialize mutations when independent copies and a verified merge strategy do not exist.
-
-Prefer **minimum cohesive useful dispatches**. More agents often increase repeated decompilation, duplicated xref traversal, incompatible naming, contradictory mutations, and synthesis cost.
+Measure fan-out by independent evidence products or semantic questions, not function, address, log-line, or sample count. Prefer broad Luna batches and cohesive Terra targets. A Git worktree does not isolate external mutable analysis state.
 
 ## 6. Replan threshold
 
-Do not repeatedly replan at the primary-coordinator level. Replan only for material new evidence, invalidated assumptions, interpretation changes, dependency changes, artifact mismatch, or scope expansion that invalidates current Tasks.
+Request primary-coordinator replanning when local scope becomes global, a protection assumption fails, evidence coverage is inadequate, an artifact identity changes, or accepted interpretations/dependencies become invalid. Ordinary local evidence gaps stay with the same Terra; ordinary bulk-input gaps extend the Luna manifest or batch.

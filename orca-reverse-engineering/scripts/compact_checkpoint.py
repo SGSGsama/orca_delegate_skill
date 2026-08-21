@@ -13,12 +13,16 @@ DROP = {
     "raw_disassembly", "raw_pseudocode", "full_trace", "binary_blob",
 }
 KEEP = (
-    "task_id", "status", "target", "artifact_id", "artifact_digest",
+    "task_id", "status", "worker_profile", "role_intent", "context_version",
+    "batch", "report_path", "contract_ref", "target", "input_manifest",
+    "coverage", "evidence_index", "raw_source_refs", "candidate_anomalies",
+    "repro_command", "upstream_evidence", "behavior_validation",
+    "artifact_id", "artifact_digest",
     "base_revision", "analysis_revision", "conclusion", "evidence",
-    "confidence", "alternatives", "contradictions", "accepted_names",
+    "local_semantics", "confidence", "alternatives", "contradictions", "accepted_names",
     "accepted_types", "accepted_offsets", "accepted_states", "schema",
-    "mutations", "validation", "new_facts", "risks", "questions",
-    "scope_deviation", "summary", "next_actions",
+    "mutations", "validation", "new_facts", "context_delta", "risks", "questions",
+    "scope_deviation", "coordinator_decision_required", "summary", "next_actions",
 )
 
 
@@ -97,6 +101,11 @@ def self_test() -> int:
     raw = {
         "task_id": "T1",
         "status": "done",
+        "role_intent": "local-semantics",
+        "report_path": "reports/t1.json",
+        "contract_ref": "contracts/receive-v2",
+        "behavior_validation": "passed",
+        "evidence_index": "reports/session-a-index.json",
         "artifact_digest": "sha256:abc",
         "conclusion": "handler parses frame header",
         "evidence": [{"function": "0x401000", "fact": "reads length"}],
@@ -110,6 +119,10 @@ def self_test() -> int:
     assert checkpoint["counts"]["done"] == 1
     assert checkpoint["analysis_head"] == "db-r7"
     assert checkpoint["context_version"] == "ctx-3"
+    assert checkpoint["tasks"][0]["role_intent"] == "local-semantics"
+    assert checkpoint["tasks"][0]["evidence_index"] == "reports/session-a-index.json"
+    assert checkpoint["tasks"][0]["report_path"] == "reports/t1.json"
+    assert checkpoint["tasks"][0]["behavior_validation"] == "passed"
     print("self-test: ok")
     return 0
 

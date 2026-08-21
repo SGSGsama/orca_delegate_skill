@@ -21,7 +21,7 @@ Stop the direct path once broad discovery or cross-module reasoning becomes nece
 
 ### Single worker
 
-Prefer one worker when the same mental model is needed for local discovery, implementation, tests, and ordinary repair. Do not manufacture separate scout/coder/tester Tasks for one cohesive module.
+Prefer one Terra composer/context owner when the same mental model is needed for local discovery, implementation, integration, tests, and ordinary repair. Do not manufacture separate scout/coder/tester Tasks for one cohesive module. A single Luna worker is preferable only when the contract is frozen and the work is a self-contained mechanical batch that needs no broad rediscovery.
 
 ### Multi-agent
 
@@ -48,6 +48,20 @@ Workers receive task-local starting points plus this reference. Update later wav
 
 If this packet cannot be built without broad exploration, dispatch exactly one read-only Terra scout first.
 
+For each coupled semantic area, add a compact lane manifest:
+
+```text
+Lane ID and current Terra composer/terminal
+Relevant context version, accepted design, and Task/product input-output contract
+Files, symbols, interfaces, invariants, and commands already inspected
+Accepted Luna leaf artifacts
+Local decisions and rejected alternatives
+Completed and pending acceptance checks
+Unresolved local questions and next starting point
+```
+
+Keep the same Terra composer while work remains inside that lane. A later Dispatch to that terminal carries only the Task delta and newly accepted leaf artifacts. Replace the composer only for failure, unavailable capability, explicit independent review, or a boundary change large enough to justify rebuilding context.
+
 ## 3. Decompose by outcome, not file count
 
 A good Task owns:
@@ -59,6 +73,8 @@ A good Task owns:
 - explicit invariants and forbidden changes;
 - exact acceptance evidence;
 - a clear escalation boundary.
+
+Before splitting, apply the context-affinity test. If two proposed Tasks require substantially the same files, local decisions, execution state, or failure interpretation, keep them in one Terra composer lane or consecutive Dispatches to the same Terra. A split is justified when it creates an independently acceptable outcome, a genuinely parallel boundary, a different required capability, or useful failure isolation.
 
 Bad split:
 
@@ -81,10 +97,11 @@ T3 integrate and run aggregate validation
 
 ### Primary coordinator agent
 
-Use only when a global decision is actually needed:
+Prefer primary-coordinator attention for:
 
 - complex initial decomposition;
-- architecture or public contract;
+- architecture, Task/product input-output contract, or public contract;
+- user-visible behavior and acceptance oracle;
 - schema/data/security/concurrency decision;
 - material contract change;
 - conflict between worker findings;
@@ -92,13 +109,21 @@ Use only when a global decision is actually needed:
 
 A high-tier coordinator decision or review must produce a TaskGraphLite, Decision Record, revised contract, conflict resolution, or review verdict.
 
-### Terra XHigh
+### Terra XHigh composer
 
-Use for unknown-cause failures, broad local reasoning, high coupling, migrations, hard concurrency/state-machine work, performance diagnosis, difficult test failures, integration, or expanded scope.
+Use as the semantic lane composer for unknown-cause failures, broad local reasoning, high coupling, migrations, hard concurrency/state-machine work, performance diagnosis, difficult test failures, integration of accepted Luna leaf artifacts, or expanded scope. Terra produces the cohesive review-ready result but does not dispatch nested workers.
 
 ### Luna Max
 
-Use for precise implementation under frozen interfaces, tests, adapters, repetitive changes, narrow repairs, documentation/configuration, and result/checkpoint compaction.
+Use for precise implementation under frozen interfaces, tests, adapters, repetitive changes, narrow independent repairs, documentation/configuration, and result/checkpoint compaction. Luna capacity is abundant, but context preparation, task lifecycle, and result integration still matter.
+
+Prefer batch-shaped Luna outcomes such as "apply this accepted transformation to this bounded set and validate all items." Do not create one Task per file, test, endpoint, or generated item. If a batch encounters a contradictory item, record and skip that item where safe, continue independent items, and return one grouped report.
+
+Because Luna is cheap, use bounded redundant Luna work when it improves evidence: regression search, generated counterexamples, compatibility matrices, or an independent check against a frozen contract. Feed those results into the same wave checkpoint; normally request primary-coordinator attention when a discrepancy changes a global decision, while preserving the coordinator's ability to inspect any result.
+
+### Cost-aware placement test
+
+Use the primary coordinator for design, input/output and behavior contracts, a global decision, the direct-path exception, and final behavioral/project review. Use Terra as composer when the work creates or depends on a rich local mental model or must integrate leaf outputs. Use Luna when all required semantics can fit in a frozen contract plus compact context/inputs. Keep work with a warm composer whenever reassignment would require the receiver to reread or rederive most of the lane context.
 
 ## 5. Safe parallelism
 
@@ -113,6 +138,8 @@ Run Tasks concurrently only when all are true:
 
 Prefer **minimum cohesive useful dispatches**. More agents often increase repeated code reading, duplicated reasoning, merge conflict, and review cost.
 
+Measure fan-out by independent acceptance units, not source-file or input-item count. Cheap Luna capacity should increase the breadth of a batch or the number of truly independent batches, not the number of coordinator conversations. Aggregate each completed wave into one checkpoint before primary-coordinator review.
+
 ## 6. Replan threshold
 
-Do not repeatedly replan at the primary-coordinator level. Replan only for material new facts, invalidated assumptions, contract changes, dependency changes, or scope expansion that invalidates current Tasks.
+Avoid routine primary-coordinator replanning. Replan there for material new facts, invalidated assumptions, contract changes, dependency changes, scope expansion that invalidates current Tasks, or whenever direct coordinator judgment would materially improve the result.

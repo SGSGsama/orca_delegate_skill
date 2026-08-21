@@ -12,9 +12,12 @@ DROP = {
     "conversation", "messages", "reasoning", "stdout", "stderr",
 }
 KEEP = (
-    "task_id", "status", "base_commit", "head_commit", "changed_files",
+    "task_id", "status", "lane", "context_version", "batch", "report_path",
+    "contract_ref", "leaf_artifacts", "behavior_validation",
+    "base_commit", "head_commit", "changed_files",
     "acceptance", "tests", "checks", "decisions", "new_facts", "risks",
-    "questions", "scope_deviation", "summary", "next_actions",
+    "context_delta", "questions", "scope_deviation",
+    "coordinator_decision_required", "summary", "next_actions",
 )
 
 
@@ -78,11 +81,14 @@ def markdown(cp: dict) -> str:
 
 
 def self_test() -> int:
-    raw = {"task_id": "T1", "status": "done", "head_commit": "abc", "tests": [{"ok": True}], "raw_log": "x" * 1000, "summary": "ok"}
+    raw = {"task_id": "T1", "status": "done", "lane": "auth-flow", "report_path": "reports/t1.json", "contract_ref": "contracts/auth-v2", "behavior_validation": "passed", "head_commit": "abc", "tests": [{"ok": True}], "raw_log": "x" * 1000, "summary": "ok"}
     cp = make_checkpoint([raw])
     blob = json.dumps(cp)
     assert "raw_log" not in blob and "xxxxxxxx" not in blob
     assert cp["counts"]["done"] == 1
+    assert cp["tasks"][0]["lane"] == "auth-flow"
+    assert cp["tasks"][0]["report_path"] == "reports/t1.json"
+    assert cp["tasks"][0]["behavior_validation"] == "passed"
     print("self-test: ok")
     return 0
 

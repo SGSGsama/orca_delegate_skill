@@ -27,6 +27,8 @@ For launch, retry, replacement, or resumed work:
 
 After a long wait, context compaction, or coordinator restart, reconstruct state from live Orca Tasks/Dispatches plus durable artifact evidence, not coordinator memory.
 
+Treat a Terra terminal as the context owner of its bounded local target, not as a disposable phase worker. Before release, check whether an adjacent function, local hypothesis, or evidence gap uses substantially the same target context; if so, create the next Task from the local delta and reuse that exact terminal. Do not make a replacement analyst reload the same functions, IL, tool state, and evidence slices.
+
 ## 3. Artifact placement and mutation
 
 - One mutation worker: use the required current or exact existing worktree and analysis context when safe, especially when user-owned uncommitted artifacts matter.
@@ -40,6 +42,17 @@ Do not create worktrees merely to appear more parallel.
 
 Create independent ready Tasks before waiting. Follow the live guide to start workers and retain Task/Dispatch provenance.
 
+### Delivery gate
+
+Pass this gate once for every new or reused worker Dispatch before entering the lifecycle wait:
+
+1. Prefer the live guide's composed worker-start path. Use low-level terminal creation and delivery only when the composed path cannot express the required topology or launch profile.
+2. For a low-level path, wait until the intended agent TUI is ready, then use the live guide's submission behavior. Text appearing in the input control is staged input, not accepted work; delivery includes the submit/Enter action.
+3. Read the delivery receipt and perform one bounded post-delivery observation. Confirm the Task and Dispatch target the expected worker and that the worker has left the staged input state and begun processing. Only then start the Run-level wait.
+4. If the complete investigation text is still staged, submit the existing buffer exactly once using the live guide. Do not type the investigation again, create a second Dispatch, or start another worker. If submission cannot be proven, report a delivery failure instead of waiting for a completion that cannot arrive.
+
+This one-time delivery observation is not ongoing worker polling and must not be repeated after processing is established.
+
 Use one blocking Run-level lifecycle wait for all active workers rather than polling terminals or opening one waiter per worker.
 
 - For ordinary reverse-engineering work, use a window of at least 15 minutes (900000 ms), or the longest supported window if the live runtime imposes a lower limit. Do not use short rolling windows merely to keep the coordinator active. Matching `worker_done`, `escalation`, or `question` messages wake the wait early, so a long timeout does not delay handling them.
@@ -48,11 +61,20 @@ Use one blocking Run-level lifecycle wait for all active workers rather than pol
 - Treat a no-message timeout as one liveness checkpoint, not worker failure. After it, use at most one cheap aggregate Run/task check before starting the next long wait. Inspect an individual terminal or raw dump only when aggregate state shows a concrete anomaly that requires it.
 - Use a shorter window only for an explicit user deadline or another concrete workflow deadline; never shorten it for routine progress visibility.
 
-The primary coordinator agent must not poll a running worker between these checkpoints or spend primary-coordinator context on terminal output or raw dumps unless a concrete decision requires a coordinator reason code.
+Avoid primary-coordinator polling, terminal inspection, or raw-dump review between these checkpoints. Inspect directly when aggregate state exposes an anomaly, the user asks, or a material interpretation genuinely needs the underlying evidence.
 
 Keep a cohesive investigation active across local clarification and ordinary evidence gaps. Do not create another Task merely for the next conversational turn.
 
 On valid completion, account for the worker according to Orca's lifecycle rules: reuse when an immediate same-profile context unit justifies it, otherwise release it. Do not manually infer or duplicate settled state.
+
+### Coordinator communication budget
+
+- Create Tasks per independently checkable evidence product or local semantic question. Put large logs, traces, dumps, candidate sets, and repetitive targets into Luna manifests/batches instead of creating per-event or per-address lifecycle traffic.
+- Require durable result artifacts. A Luna report carries input coverage, evidence-index references, clusters, and exceptions; a Terra report carries one bounded semantic conclusion with cited evidence and residual ambiguity.
+- Keep `worker_done` to at most three short sentences: status, evidence/blocker, and report path. Never place raw bulk inputs, full dumps, or copied decompilation in the Run inbox.
+- Accept coverage-complete low-risk Luna extraction and well-evidenced bounded Terra conclusions without narrating each result. Compact the wave before global synthesis; the primary coordinator can drill into any raw source reference when needed.
+- A Luna batch continues safe independent items and groups anomalies. A Terra analyst resolves questions within its local target. Escalate when interpretation becomes global, protection assumptions change, or evidence/mutation policy must change.
+- Default primary-coordinator communication covers global hypotheses/decisions, material contradictions or blockers, and the final algorithm/behavior/protection synthesis. Keep ordinary lifecycle progress in Orca state unless it helps the user or a decision.
 
 ## 5. Result routing
 
@@ -60,36 +82,37 @@ Classify before choosing another model:
 
 | Result | Route |
 |---|---|
-| Ordinary local evidence gap within contract | Same worker, delta-only follow-up |
-| Approved mechanical extraction/propagation | Luna Max |
-| Unknown meaning / expanded local ambiguity | Terra Max |
-| Shared structure, protocol, or global model invalid | Primary coordinator agent |
-| Evidence or mutation policy decision | Primary coordinator agent |
-| Cross-task contradiction | Primary coordinator agent |
+| Ordinary evidence gap or adjacent question inside one bounded target | Same Terra, delta-only follow-up |
+| Precise function/cluster meaning or local data/control flow | Terra Max local analyst |
+| More logs/traces/dumps/candidates or repetitive extraction needed | Luna Max evidence processor |
+| Bulk evidence exposes a precise local anomaly | Terra Max with the referenced evidence slice |
+| Approved broad name/type/comment propagation | Luna Max batch |
+| Algorithm flow, system behavior, complex protection, or global model changes | Primary coordinator agent |
+| Cross-target contradiction or evidence/mutation policy decision | Primary coordinator agent |
 
-Changing agents unnecessarily repays artifact loading, tool orientation, decompilation, and local problem-understanding cost.
+Changing agents unnecessarily repays artifact loading, tool orientation, decompilation, and target-understanding cost. Give Luna explicit input manifests and schemas; give Terra exact local targets and evidence slices.
 
 ## 6. Acceptance and synthesis gates
 
-### Local evidence accept
+### Bulk evidence accept
 
-Use for low-risk bounded findings when:
+Use for Luna evidence processing when:
 
-- target and access/mutation scope match the contract;
-- cited evidence is sufficient to distinguish the stated hypotheses;
-- confidence is calibrated and alternatives are recorded;
-- no accepted shared interpretation changed unexpectedly;
-- no material contradiction or unresolved risk remains.
+- the input manifest and schema match the Task;
+- processed/skipped coverage is explicit;
+- output identifiers link back to raw sources;
+- anomalies and malformed inputs are preserved;
+- no new semantic interpretation is silently asserted.
 
 No individual high-tier coordinator review is required.
 
-### Synthesis review
+### Local semantic accept
 
-Use when multiple accepted findings interact. Terra or the coordinator checks shared names/types/offsets, call and data flow, state/protocol consistency, artifact identities, mutation results, and aggregate evidence.
+Use for Terra findings when the target remains bounded, cited evidence supports the conclusion, alternatives and confidence are recorded, and the finding does not silently change the global algorithm or protection model. The coordinator may accept it locally or use it as an input to global synthesis.
 
-### Coordinator synthesis
+### Coordinator global and adversarial synthesis
 
-Use once when work is medium/high risk, cross-cutting, protocol-wide, changes important interpretations or mutation policy, or triggers another coordinator reason code. Send a compact synthesis packet and evidence references, not worker transcripts or raw dumps.
+Use the primary coordinator to reconstruct and validate algorithms, cross-function/cross-artifact behavior, global state/protocol meaning, and complex protection or anti-analysis interactions. Start with indexed Luna evidence and cited Terra conclusions, then inspect underlying code or raw evidence directly as needed. Keep final synthesis focused on the global model, causal flow, behavior validation, decisive evidence, contradictions, and residual uncertainty.
 
 ## 7. Checkpoint and resume
 
@@ -99,7 +122,9 @@ Before high-tier synthesis or after a substantial wave, compact results into:
 Run/context version and artifact identities
 Analysis/database revision
 Tasks done/blocked/failed
-Accepted conclusions and evidence references
+Bulk input coverage and evidence-index references
+Accepted local function/cluster conclusions
+Global algorithm/behavior/protection conclusions
 Accepted names/types/offsets/states/schemas
 Verified mutations
 Rejected hypotheses and contradictions
