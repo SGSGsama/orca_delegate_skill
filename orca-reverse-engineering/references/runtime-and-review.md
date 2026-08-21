@@ -40,7 +40,15 @@ Do not create worktrees merely to appear more parallel.
 
 Create independent ready Tasks before waiting. Follow the live guide to start workers and retain Task/Dispatch provenance.
 
-Wait on Orca completion callbacks/lifecycle messages rather than continuously reading terminals. The primary coordinator agent must not poll a running worker between callbacks. If a worker has not emitted `worker_done` (or the version-equivalent completion event), a liveness/status check may occur no more than once every 15 minutes per worker. These checks should use the cheapest coordinator/runtime path available; do not spend primary-coordinator context on terminal output or raw dumps unless the check reveals a decision that actually requires a coordinator reason code. A timeout is a checkpoint, not proof of completion.
+Use one blocking Run-level lifecycle wait for all active workers rather than polling terminals or opening one waiter per worker.
+
+- For ordinary reverse-engineering work, use a window of at least 15 minutes (900000 ms), or the longest supported window if the live runtime imposes a lower limit. Do not use short rolling windows merely to keep the coordinator active. Matching `worker_done`, `escalation`, or `question` messages wake the wait early, so a long timeout does not delay handling them.
+- Keep exactly one Orca lifecycle wait in flight for the Run. If the host command runner returns a still-running process/session handle, continue that same process/session. Do not launch another Orca check alongside it.
+- Treat transport `_keepalive` or `_heartbeat` frames as evidence that the same call is still active, not as lifecycle messages, completion, timeout, or a reason to inspect workers.
+- Treat a no-message timeout as one liveness checkpoint, not worker failure. After it, use at most one cheap aggregate Run/task check before starting the next long wait. Inspect an individual terminal or raw dump only when aggregate state shows a concrete anomaly that requires it.
+- Use a shorter window only for an explicit user deadline or another concrete workflow deadline; never shorten it for routine progress visibility.
+
+The primary coordinator agent must not poll a running worker between these checkpoints or spend primary-coordinator context on terminal output or raw dumps unless a concrete decision requires a coordinator reason code.
 
 Keep a cohesive investigation active across local clarification and ordinary evidence gaps. Do not create another Task merely for the next conversational turn.
 

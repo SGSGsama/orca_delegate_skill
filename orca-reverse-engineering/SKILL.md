@@ -12,7 +12,7 @@ description: >-
   investigations with shared binary and project context so workers do not
   repeat global discovery.
 metadata:
-  version: "0.2.1"
+  version: "0.2.2"
 ---
 
 # Orca Reverse Engineering
@@ -102,7 +102,9 @@ Parallelize only when dependencies and accepted interpretations are stable, targ
 
 ## Supervised loop and synthesis gates
 
-Follow the live Orca orchestration guide for Run, Task, Dispatch, wait, reply, release, retry, and completion lifecycle. The primary coordinator agent must not continuously poll worker state: prefer Orca completion callbacks/lifecycle messages (`worker_done` or equivalent). If no completion callback arrives, perform at most one liveness/status check per worker every 15 minutes; do not spend primary-coordinator reasoning on intermediate terminal polling or raw dumps.
+Follow the live Orca orchestration guide for Run, Task, Dispatch, wait, reply, release, retry, and completion lifecycle. Keep exactly one Run-level blocking lifecycle wait in flight across all active workers. For ordinary reverse-engineering work, each wait window must be at least 15 minutes (900000 ms), or the longest supported window if the live runtime imposes a lower limit; matching lifecycle messages wake it early. A transport keepalive/heartbeat does not end that wait or justify another Orca check. If the command runner yields an in-progress process or session, resume that same call instead of starting a second check.
+
+After a no-message timeout, perform at most one cheap aggregate liveness checkpoint for the Run before entering the next long wait. Do not fan out status reads per worker unless the aggregate state exposes a concrete anomaly, and do not spend primary-coordinator reasoning on intermediate terminal polling or raw dumps.
 
 Classify results before escalating:
 
