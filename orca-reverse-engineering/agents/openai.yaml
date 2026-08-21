@@ -1,6 +1,6 @@
 interface:
   display_name: "Orca Reverse Engineering"
-  short_description: "Default Orca delegation for reverse engineering"
-  default_prompt: "Use $orca-reverse-engineering to delegate the local investigations through Orca and synthesize the reverse-engineering result."
+  short_description: "Lean Orca orchestration for non-trivial reversing"
+  default_prompt: "Use $orca-reverse-engineering to choose the smallest reliable investigation shape, delegate through Orca when useful, and synthesize evidence-backed conclusions."
 policy:
   allow_implicit_invocation: true

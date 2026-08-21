@@ -1,6 +1,6 @@
 interface:
   display_name: "Orca Software Development"
-  short_description: "Default Orca delegation for non-trivial coding"
-  default_prompt: "Use $orca-software-development to delegate implementation and diagnosis through Orca, then review and verify the result."
+  short_description: "Lean Orca orchestration for non-trivial coding"
+  default_prompt: "Use $orca-software-development to choose the smallest reliable execution shape, delegate through Orca when useful, and verify the integrated result."
 policy:
   allow_implicit_invocation: true
