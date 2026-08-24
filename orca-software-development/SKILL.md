@@ -11,7 +11,7 @@ description: >-
   cohesive end-to-end Tasks with shared project context so workers do not
   repeat repository discovery.
 metadata:
-  version: "0.3.5"
+  version: "0.3.6"
 ---
 
 # Orca Software Development
@@ -50,7 +50,9 @@ Before starting a new long Run-level wait—after the initial Dispatch wave, an 
 
 When the first Dispatch becomes active, choose one long Run-level liveness interval appropriate to the expected task duration and record it in the compact Run Context. It must normally be at least 15 minutes (`900000 ms`); longer intervals are encouraged for long tasks. Use that interval as the Orca lifecycle-wait timeout for all active workers.
 
-Keep exactly one Run-level blocking wait in flight. A command-runner yield, keepalive, heartbeat, or coordinator idleness does not end it: resume the exact live process/session with the longest supported host wait, suppress transport-only frames with the live guide's supported filter, and remain silent when it contains no lifecycle event. Do not issue another Orca command or status query while that wait is alive.
+Keep exactly one Run-level blocking wait in flight. A command-runner yield, keepalive, heartbeat, or coordinator idleness does not end it: resume the exact live process/session with the longest supported host wait, suppress transport-only frames with the live guide's supported filter when useful, and remain silent when it contains no lifecycle event. While that wait is alive, do not calculate, compare, or narrate elapsed time, remaining time, window fractions, deadline proximity, connection health, or worker/process health from transport or wait metadata. Tool-generated background-terminal records may remain visible; they are not coordinator work or a reason to comment. Do not issue another Orca command or status query while that wait is alive.
+
+Carry the runtime reference's compact resume capsule across long waits and context compaction. Treat it as control state: compaction alone must not change the primary-coordinator role, accepted contracts, worker profiles, event filter, outstanding Dispatch accounting, delivery-gate status, consumed think-before-wait pass, or next legal action. In particular, it must not cause a new waiter, re-dispatch, another reflection pass, or status inspection.
 
 Only an actionable Delivery, a true completed wait timeout, or an explicit wait failure/cancellation changes coordinator state. Process and acknowledge a Delivery under the live Orca contract. After a true timeout, perform at most one aggregate Run/task liveness check and start one new wait only if Dispatches remain outstanding. Follow exact runtime recovery for a failed wait without inferring worker failure. Do not poll individual workers unless aggregate state exposes a concrete anomaly, the user asks, or a material decision needs their output. This stricter policy narrows generic per-window liveness suggestions in the live guide; its Delivery, acknowledgement, and worker-accounting rules still apply.
 

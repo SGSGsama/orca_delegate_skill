@@ -25,7 +25,22 @@ For launch, retry, replacement, or resumed work:
 4. treat mismatch as launch failure, not permission to silently downgrade;
 5. reuse an existing terminal only when Orca proves it has the same effective profile and reuse is valid.
 
-After a long wait, context compaction, or coordinator restart, reconstruct state from live Orca Tasks/Dispatches plus durable artifact evidence, not coordinator memory. Preserve the selected liveness interval and any live host wait handle in compact turn state so a yield or compaction does not create a second waiter; never persist transient process handles in Git or analysis artifacts.
+After a long wait, context compaction, or coordinator restart, reconstruct durable facts from live Orca Tasks/Dispatches plus durable artifact evidence, not free-form coordinator memory. Maintain this minimal transient resume capsule in compact turn state:
+
+```text
+role=primary_coordinator
+run_id=<id> context_version=<version-or-ref>
+accepted_global_model=<refs> outstanding=<Task/Dispatch/profile/warm-terminal tuples>
+delivery_gate=<passed-or-not-applicable>
+wait_epoch=<id> think_before_wait=<consumed-or-pending>
+wait_state=<active|none> wait_handle=<exact live host handle>
+event_filter=<full version-matched filter, including question when supported> timeout_ms=<selected interval>
+wake_on=delivery|true_timeout|wait_failure|user
+next_action=<resume_same_wait-or-explicit lifecycle action>
+model_observation=silent_until_event
+```
+
+This is control state, not a progress narrative. Preserve exact identifiers, artifact/database revisions, model/effort profiles, the full lifecycle filter, accepted hypotheses, and consumed gates; a resume must not silently downgrade effort or drop a message type such as `question`. Do not recreate or reinterpret these fields after compaction. If `wait_state=active`, execute only `next_action=resume_same_wait` until a `wake_on` event occurs. The timeout is runtime control state, not a model countdown. If the saved host handle is explicitly invalid after restart, enter wait-failure recovery once rather than guessing or creating parallel waiters. Never persist transient process handles in Git or analysis artifacts.
 
 Treat a Terra terminal as the context owner of its bounded local target, not as a disposable phase worker. Before release, check whether an adjacent function, local hypothesis, or evidence gap uses substantially the same target context; if so, create the next Task from the local delta and reuse that exact terminal. Do not make a replacement analyst reload the same functions, IL, tool state, and evidence slices.
 
@@ -67,7 +82,7 @@ Use one blocking Run-level lifecycle wait for all active workers rather than pol
 
 - **Choose the interval once.** When the first Dispatch becomes active, choose and record one global liveness interval based on expected investigation duration, user deadlines, and runtime reliability. It must normally be at least 15 minutes (`900000 ms`); 30-60 minutes is appropriate for long analysis. If Orca itself imposes a lower maximum, use that maximum. A host command-runner yield limit is not an Orca timeout limit. Do not shorten the interval for visibility or to keep the coordinator active.
 - **Start one wait.** Use the selected interval as `check --wait`'s timeout. Matching lifecycle messages wake it early, so a long timeout does not delay handling. This interval is the coordinator's liveness-check cadence, not the transport or worker heartbeat cadence.
-- **Live wait state.** If the host returns a still-running process/session handle, resume that exact handle using the longest host blocking interval available. `_keepalive`, `_heartbeat`, partial command output, and command-runner yield mean the same wait is alive. Transport keepalive cadence is runtime-owned and may be fixed; do not try to change it through the selected liveness interval. When the version-matched guide exposes a supported keepalive filter, use it without hiding the final Delivery or real command errors. Do not launch another Orca command, inspect Run/task/terminal/raw-evidence state, surface transport-only frames, or emit progress narration from a keepalive-only resume.
+- **Live wait state.** If the host returns a still-running process/session handle, resume that exact handle using the longest host blocking interval available. `_keepalive`, `_heartbeat`, partial command output, and command-runner yield mean the same wait is alive. Transport keepalive cadence is runtime-owned and may be fixed; do not try to change it through the selected liveness interval. When the version-matched guide exposes a supported keepalive filter, use it when useful without hiding the final Delivery or real command errors. A no-event resume requires no coordinator interpretation: do not derive elapsed or remaining time, window fraction, deadline proximity, connection health, or worker/process health; do not launch another Orca command, inspect Run/task/terminal/raw-evidence state, or emit wait-progress commentary. Tool-generated background-terminal records are acceptable and do not change this rule.
 - **Delivery state.** Process every message in the bounded Delivery. Reply to questions and account for each completed worker by reuse, retention, or release before acknowledgement. If none remain, acknowledge without starting another wait. If Dispatches remain, think once before waiting. When no execution or dispatch follows, use the live guide's combined acknowledgement-and-wait path with the selected interval after recording any useful plan delta. When a bounded action was selected, acknowledge without waiting, complete it, then start exactly one wait without thinking again.
 - **True-timeout state.** Only a completed result that reports an actual no-message timeout or `{count:0}` ends the wait without a Delivery. It is a liveness checkpoint, not worker failure. Perform at most one cheap aggregate Run/task query when useful, think once before waiting, then start exactly one new wait with the selected interval if Dispatches remain outstanding. Complete any selected bounded action first, without another reflection pass afterward.
 - **Wait-failure state.** A cancellation, connection loss, or explicit command failure ends the host wait but does not prove worker failure. Follow the exact runtime recovery guidance and re-establish at most one Run-level waiter; do not substitute worker-terminal or raw-evidence polling.
@@ -81,7 +96,7 @@ On valid completion, account for the worker according to Orca's lifecycle rules:
 
 ### Coordinator communication budget
 
-- Filter transport keepalive at the command/tool boundary before it reaches primary-coordinator model context; ignoring it after reading does not reduce input cost. Do not request routine worker heartbeat/status messages. When the live preamble or a concrete reliability risk requires heartbeats, choose one long Run-level cadence no shorter than the selected liveness interval and send only meaningful phase changes.
+- Filter transport keepalive at the command/tool boundary when convenient, but do not spend coordinator reasoning or narration on transport records that remain visible. Do not request routine worker heartbeat/status messages. When the live preamble or a concrete reliability risk requires heartbeats, choose one long Run-level cadence no shorter than the selected liveness interval and send only meaningful phase changes.
 - Create Tasks per independently checkable evidence product or local semantic question. Put large logs, traces, dumps, candidate sets, and repetitive targets into Luna manifests/batches instead of creating per-event or per-address lifecycle traffic.
 - Require durable result artifacts. A Luna report carries input coverage, evidence-index references, clusters, and exceptions; a Terra report carries one bounded semantic conclusion with cited evidence and residual ambiguity.
 - Keep `worker_done` to at most three short sentences: status, evidence/blocker, and report path. Never place raw bulk inputs, full dumps, or copied decompilation in the Run inbox.
@@ -135,7 +150,7 @@ Before high-tier synthesis or after a substantial wave, compact results into:
 Run/context version and artifact identities
 Analysis/database revision
 Selected liveness interval and last true timeout/checkpoint
-Outstanding Dispatch IDs
+Outstanding Task/Dispatch IDs and persisted worker profiles
 Tasks done/blocked/failed
 Bulk input coverage and evidence-index references
 Accepted local function/cluster conclusions
@@ -147,7 +162,7 @@ Risks/questions
 Next investigations
 ```
 
-Drop raw logs, disassembly, pseudocode, full traces, and conversations. If persistent recovery is needed, store only compact checkpoints and decision/evidence references in Git or Orca comments; do not turn Git into a message database or copy binaries unnecessarily.
+Refresh the durable checkpoint and transient resume capsule only after a real lifecycle transition, Dispatch/accounting change, accepted decision or hypothesis, or user instruction—not after keepalive, host yield, or compaction itself. Drop raw logs, disassembly, pseudocode, full traces, and conversations. If persistent recovery is needed, store only compact checkpoints and decision/evidence references in Git or Orca comments; do not turn Git into a message database or copy binaries unnecessarily.
 
 ## 8. Termination
 
