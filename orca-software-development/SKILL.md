@@ -11,7 +11,7 @@ description: >-
   cohesive end-to-end Tasks with shared project context so workers do not
   repeat repository discovery.
 metadata:
-  version: "0.3.1"
+  version: "0.3.5"
 ---
 
 # Orca Software Development
@@ -42,13 +42,19 @@ A Task owns one meaningful outcome and its complete local loop. Do not split exp
 
 ## Run Orca safely
 
-Before the first Orca operation, activate the installed `orca-cli` and `orchestration` skills and follow their current version-matched guidance. Complete the delivery gate once: prove the intended Dispatch exists and the worker has begun processing; staged text without submission is not delivery.
+Before the first Orca operation, activate the installed `orca-cli` and `orchestration` skills and follow their current version-matched guidance. Complete the delivery gate once: prove the intended Dispatch exists and the worker has begun processing; staged text without submission is not delivery. On a low-level terminal path, input and submit/Enter are one atomic delivery action—never yield the coordinator turn with the Task still in the worker's input box.
 
-### Worker check interval — required
+### Event-driven worker waiting — required
 
-After delivery, keep exactly one Run-level blocking lifecycle wait in flight for all active workers. For ordinary worker runs, every wait window must be at least 15 minutes (`900000 ms`), or the longest supported window if the runtime imposes a lower maximum. Matching `worker_done`, `escalation`, or `question` messages wake it early.
+Before starting a new long Run-level wait—after the initial Dispatch wave, an actionable Delivery, or a true timeout—pause once for a bounded think-before-wait pass from accepted Run Context. Reconsider next steps, solution or research approach, remaining acceptance gaps, and useful coordinator-owned design or global reasoning. The pass may simply improve the plan, perform one bounded analysis, identify a stable independent Task worth dispatching, or conclude that waiting is correct; it need not produce new work. Do not repeat it for keepalive, command-runner yield, live-session resume, coordinator idleness, or ordinary completion of work selected by the same pass.
 
-A keepalive or heartbeat does not end the wait and never justifies another check. If the command runner yields a live process/session, resume that same call. After a no-message timeout, perform at most one aggregate Run/task liveness check, then start the next long wait. Do not poll individual workers unless aggregate state exposes a concrete anomaly, the user asks, or a material decision needs their output.
+When the first Dispatch becomes active, choose one long Run-level liveness interval appropriate to the expected task duration and record it in the compact Run Context. It must normally be at least 15 minutes (`900000 ms`); longer intervals are encouraged for long tasks. Use that interval as the Orca lifecycle-wait timeout for all active workers.
+
+Keep exactly one Run-level blocking wait in flight. A command-runner yield, keepalive, heartbeat, or coordinator idleness does not end it: resume the exact live process/session with the longest supported host wait, suppress transport-only frames with the live guide's supported filter, and remain silent when it contains no lifecycle event. Do not issue another Orca command or status query while that wait is alive.
+
+Only an actionable Delivery, a true completed wait timeout, or an explicit wait failure/cancellation changes coordinator state. Process and acknowledge a Delivery under the live Orca contract. After a true timeout, perform at most one aggregate Run/task liveness check and start one new wait only if Dispatches remain outstanding. Follow exact runtime recovery for a failed wait without inferring worker failure. Do not poll individual workers unless aggregate state exposes a concrete anomaly, the user asks, or a material decision needs their output. This stricter policy narrows generic per-window liveness suggestions in the live guide; its Delivery, acknowledgement, and worker-accounting rules still apply.
+
+Minimize primary-coordinator input at the source. Admit actionable lifecycle messages, compact decision evidence, and allowed aggregate checkpoints; filter transport frames, repeated receipts, routine status, and raw worker output before they enter coordinator context. Do not request routine worker heartbeats. When a live preamble or concrete reliability risk requires them, choose a long Run-level cadence and report phase changes rather than unchanged aliveness.
 
 Reuse a warm Terra composer for same-lane continuation. Batch Luna work by independently acceptable outcome, locally accept low-risk results, and compact each completed wave before primary-coordinator review. The coordinator may inspect any underlying evidence when useful, while default user-facing output stays decision-focused.
 

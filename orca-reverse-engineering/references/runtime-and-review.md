@@ -25,7 +25,7 @@ For launch, retry, replacement, or resumed work:
 4. treat mismatch as launch failure, not permission to silently downgrade;
 5. reuse an existing terminal only when Orca proves it has the same effective profile and reuse is valid.
 
-After a long wait, context compaction, or coordinator restart, reconstruct state from live Orca Tasks/Dispatches plus durable artifact evidence, not coordinator memory.
+After a long wait, context compaction, or coordinator restart, reconstruct state from live Orca Tasks/Dispatches plus durable artifact evidence, not coordinator memory. Preserve the selected liveness interval and any live host wait handle in compact turn state so a yield or compaction does not create a second waiter; never persist transient process handles in Git or analysis artifacts.
 
 Treat a Terra terminal as the context owner of its bounded local target, not as a disposable phase worker. Before release, check whether an adjacent function, local hypothesis, or evidence gap uses substantially the same target context; if so, create the next Task from the local delta and reuse that exact terminal. Do not make a replacement analyst reload the same functions, IL, tool state, and evidence slices.
 
@@ -47,21 +47,33 @@ Create independent ready Tasks before waiting. Follow the live guide to start wo
 Pass this gate once for every new or reused worker Dispatch before entering the lifecycle wait:
 
 1. Prefer the live guide's composed worker-start path. Use low-level terminal creation and delivery only when the composed path cannot express the required topology or launch profile.
-2. For a low-level path, wait until the intended agent TUI is ready, then use the live guide's submission behavior. Text appearing in the input control is staged input, not accepted work; delivery includes the submit/Enter action.
+2. For a low-level path, wait until the intended agent TUI is ready, then use the live guide's atomic send-and-submit behavior. Include submit/Enter in the same terminal-delivery action as the investigation text. Never stage text now and plan to press Enter in a later coordinator turn. If the runtime exposes only separate input and submit actions, perform them as one uninterrupted delivery sequence before commentary, waiting, or any unrelated operation.
 3. Read the delivery receipt and perform one bounded post-delivery observation. Confirm the Task and Dispatch target the expected worker and that the worker has left the staged input state and begun processing. Only then start the Run-level wait.
 4. If the complete investigation text is still staged, submit the existing buffer exactly once using the live guide. Do not type the investigation again, create a second Dispatch, or start another worker. If submission cannot be proven, report a delivery failure instead of waiting for a completion that cannot arrive.
 
 This one-time delivery observation is not ongoing worker polling and must not be repeated after processing is established.
 
+### Think once before waiting
+
+Before a new long wait after the initial Dispatch wave, a processed actionable Delivery, or a true timeout, pause once to reconsider the investigation. One lifecycle transition permits one pass; anything considered or selected by that pass does not recursively trigger another pass.
+
+Use only accepted global context, current evidence/acceptance gaps, and already available durable evidence. The coordinator may think through next investigations, research or recovery approaches, global hypotheses, algorithm/protection models, falsification or synthesis plans, what remains blocked, or whether another useful independent Luna/Terra Task has emerged. This reflection need not create an artifact or change the plan. Do not read active worker terminals or partial output, reopen settled hypotheses without new evidence, perform broad raw-input exploration, or create optional naming/comment work merely to keep the coordinator busy.
+
+If the pass reveals one clearly useful bounded coordinator analysis, the coordinator may perform it at a natural checkpoint. If it reveals stable independent work that clearly advances the critical path or material uncertainty reduction, does not depend on unaccepted worker output, does not duplicate/conflict with active investigation or mutable analysis state, and repays context and synthesis cost, create the minimum cohesive additional Luna/Terra Dispatch wave. Otherwise start the long wait immediately.
+
+Thinking does not imply dispatch. Do not manufacture investigations, force a hypothesis/plan change, or perform repeated passes to maximize utilization.
+
 Use one blocking Run-level lifecycle wait for all active workers rather than polling terminals or opening one waiter per worker.
 
-- For ordinary reverse-engineering work, use a window of at least 15 minutes (900000 ms), or the longest supported window if the live runtime imposes a lower limit. Do not use short rolling windows merely to keep the coordinator active. Matching `worker_done`, `escalation`, or `question` messages wake the wait early, so a long timeout does not delay handling them.
-- Keep exactly one Orca lifecycle wait in flight for the Run. If the host command runner returns a still-running process/session handle, continue that same process/session. Do not launch another Orca check alongside it.
-- Treat transport `_keepalive` or `_heartbeat` frames as evidence that the same call is still active, not as lifecycle messages, completion, timeout, or a reason to inspect workers.
-- Treat a no-message timeout as one liveness checkpoint, not worker failure. After it, use at most one cheap aggregate Run/task check before starting the next long wait. Inspect an individual terminal or raw dump only when aggregate state shows a concrete anomaly that requires it.
-- Use a shorter window only for an explicit user deadline or another concrete workflow deadline; never shorten it for routine progress visibility.
+- **Choose the interval once.** When the first Dispatch becomes active, choose and record one global liveness interval based on expected investigation duration, user deadlines, and runtime reliability. It must normally be at least 15 minutes (`900000 ms`); 30-60 minutes is appropriate for long analysis. If Orca itself imposes a lower maximum, use that maximum. A host command-runner yield limit is not an Orca timeout limit. Do not shorten the interval for visibility or to keep the coordinator active.
+- **Start one wait.** Use the selected interval as `check --wait`'s timeout. Matching lifecycle messages wake it early, so a long timeout does not delay handling. This interval is the coordinator's liveness-check cadence, not the transport or worker heartbeat cadence.
+- **Live wait state.** If the host returns a still-running process/session handle, resume that exact handle using the longest host blocking interval available. `_keepalive`, `_heartbeat`, partial command output, and command-runner yield mean the same wait is alive. Transport keepalive cadence is runtime-owned and may be fixed; do not try to change it through the selected liveness interval. When the version-matched guide exposes a supported keepalive filter, use it without hiding the final Delivery or real command errors. Do not launch another Orca command, inspect Run/task/terminal/raw-evidence state, surface transport-only frames, or emit progress narration from a keepalive-only resume.
+- **Delivery state.** Process every message in the bounded Delivery. Reply to questions and account for each completed worker by reuse, retention, or release before acknowledgement. If none remain, acknowledge without starting another wait. If Dispatches remain, think once before waiting. When no execution or dispatch follows, use the live guide's combined acknowledgement-and-wait path with the selected interval after recording any useful plan delta. When a bounded action was selected, acknowledge without waiting, complete it, then start exactly one wait without thinking again.
+- **True-timeout state.** Only a completed result that reports an actual no-message timeout or `{count:0}` ends the wait without a Delivery. It is a liveness checkpoint, not worker failure. Perform at most one cheap aggregate Run/task query when useful, think once before waiting, then start exactly one new wait with the selected interval if Dispatches remain outstanding. Complete any selected bounded action first, without another reflection pass afterward.
+- **Wait-failure state.** A cancellation, connection loss, or explicit command failure ends the host wait but does not prove worker failure. Follow the exact runtime recovery guidance and re-establish at most one Run-level waiter; do not substitute worker-terminal or raw-evidence polling.
+- **Exceptional inspection.** Inspect an individual terminal or raw evidence only when aggregate state identifies a concrete anomaly requiring that evidence, the user explicitly requests it, or a material global interpretation genuinely depends on partial output.
 
-Avoid primary-coordinator polling, terminal inspection, or raw-dump review between these checkpoints. Inspect directly when aggregate state exposes an anomaly, the user asks, or a material interpretation genuinely needs the underlying evidence.
+This state machine intentionally narrows the live guide's generic suggestion to inspect state after an empty wait window: only completion of the coordinator's selected long interval qualifies here. The live guide remains authoritative for Delivery ordering, acknowledgement, questions, and worker reuse/release.
 
 Keep a cohesive investigation active across local clarification and ordinary evidence gaps. Do not create another Task merely for the next conversational turn.
 
@@ -69,6 +81,7 @@ On valid completion, account for the worker according to Orca's lifecycle rules:
 
 ### Coordinator communication budget
 
+- Filter transport keepalive at the command/tool boundary before it reaches primary-coordinator model context; ignoring it after reading does not reduce input cost. Do not request routine worker heartbeat/status messages. When the live preamble or a concrete reliability risk requires heartbeats, choose one long Run-level cadence no shorter than the selected liveness interval and send only meaningful phase changes.
 - Create Tasks per independently checkable evidence product or local semantic question. Put large logs, traces, dumps, candidate sets, and repetitive targets into Luna manifests/batches instead of creating per-event or per-address lifecycle traffic.
 - Require durable result artifacts. A Luna report carries input coverage, evidence-index references, clusters, and exceptions; a Terra report carries one bounded semantic conclusion with cited evidence and residual ambiguity.
 - Keep `worker_done` to at most three short sentences: status, evidence/blocker, and report path. Never place raw bulk inputs, full dumps, or copied decompilation in the Run inbox.
@@ -121,6 +134,8 @@ Before high-tier synthesis or after a substantial wave, compact results into:
 ```text
 Run/context version and artifact identities
 Analysis/database revision
+Selected liveness interval and last true timeout/checkpoint
+Outstanding Dispatch IDs
 Tasks done/blocked/failed
 Bulk input coverage and evidence-index references
 Accepted local function/cluster conclusions
