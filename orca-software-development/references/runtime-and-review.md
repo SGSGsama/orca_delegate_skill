@@ -127,12 +127,15 @@ Route a mechanical correction to Luna only when its compact input contract is su
 Use for low-risk bounded work when:
 
 - write scope matches contract;
+- actual files and evidence inspected remain inside the coordinator-approved envelope;
 - acceptance evidence is complete;
 - targeted tests/checks pass;
 - no shared interface changed unexpectedly;
 - no material risk or unresolved question remains.
 
 No individual high-tier coordinator review is required.
+
+An undeclared read/write/evidence expansion or a worker-made shared-contract decision is `REVISE` even when targeted tests pass.
 
 ### Composer integration review
 

@@ -90,7 +90,7 @@ Use one blocking Run-level lifecycle wait for all active workers rather than pol
 
 This state machine intentionally narrows the live guide's generic suggestion to inspect state after an empty wait window: only completion of the coordinator's selected long interval qualifies here. The live guide remains authoritative for Delivery ordering, acknowledgement, questions, and worker reuse/release.
 
-Keep a cohesive investigation active across local clarification and ordinary evidence gaps. Do not create another Task merely for the next conversational turn.
+Keep a cohesive investigation active across local clarification and coordinator-approved evidence deltas. Do not create another Task merely for the next conversational turn.
 
 On valid completion, account for the worker according to Orca's lifecycle rules: reuse when an immediate same-profile context unit justifies it, otherwise release it. Do not manually infer or duplicate settled state.
 
@@ -110,7 +110,7 @@ Classify before choosing another model:
 
 | Result | Route |
 |---|---|
-| Ordinary evidence gap or adjacent question inside one bounded target | Same Terra, delta-only follow-up |
+| Ordinary evidence gap or adjacent question inside the approved envelope | Same Terra, delta-only follow-up |
 | Precise function/cluster meaning or local data/control flow | Terra Max local analyst |
 | More logs/traces/dumps/candidates or repetitive extraction needed | Luna Max evidence processor |
 | Bulk evidence exposes a precise local anomaly | Terra Max with the referenced evidence slice |
@@ -136,7 +136,7 @@ No individual high-tier coordinator review is required.
 
 ### Local semantic accept
 
-Use for Terra findings when the target remains bounded, cited evidence supports the conclusion, alternatives and confidence are recorded, and the finding does not silently change the global algorithm or protection model. The coordinator may accept it locally or use it as an input to global synthesis.
+Use for Terra findings when the target remains inside the coordinator-approved envelope, the report identifies the actual evidence slices inspected, cited evidence supports the conclusion, alternatives and confidence are recorded, and the finding does not silently change the global algorithm or protection model. An undeclared target/evidence expansion is `REVISE` even when the conclusion appears correct. The coordinator may accept a compliant result locally or use it as an input to global synthesis.
 
 ### Coordinator global and adversarial synthesis
 

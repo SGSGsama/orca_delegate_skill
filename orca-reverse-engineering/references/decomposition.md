@@ -28,7 +28,9 @@ Use Terra for a precise function or tightly coupled local cluster whose meaning 
 - a precise local hypothesis test, contradiction check, type/name proposal, or difficult decompiler/IL interpretation;
 - local validation needed by a coordinator-owned global algorithm or protection analysis.
 
-Keep exploration, hypothesis testing, evidence collection, and conclusion together. Reuse the same Terra terminal for adjacent questions sharing the same target context. If the conclusion expands into system-wide algorithm or adversarial reasoning, return the local evidence and escalate the global interpretation instead of independently rediscovering the whole target.
+Keep exploration, hypothesis testing, evidence collection, and conclusion together. Reuse the same Terra terminal for coordinator-issued adjacent questions sharing the same target context. If the conclusion expands into system-wide algorithm or adversarial reasoning, return the local evidence and escalate the global interpretation instead of independently rediscovering the whole target.
+
+Terra's supplied target and evidence slices are an exclusive context budget, not an invitation to follow every transitive discovery. It may deeply inspect those slices but must return `NEED_BULK_EVIDENCE` rather than search broad logs, traces, dumps, captures, exports, sessions, or candidate corpora. Adjacent targets require an explicit coordinator-issued scope delta even when the same warm terminal is reused.
 
 ### Luna: high-volume evidence processing
 
@@ -108,8 +110,8 @@ This is a routing model, not a mandatory linear pipeline. The coordinator may di
 
 | New condition | Route |
 |---|---|
-| Ordinary evidence gap inside one local target | Same Terra, delta-only follow-up |
-| Local target expands to adjacent tightly coupled functions | Same Terra if context remains bounded |
+| Ordinary evidence gap inside the supplied local evidence slice | Same Terra, delta-only follow-up |
+| Local target expands to adjacent tightly coupled functions | Coordinator-issued scope delta to the same Terra if context remains bounded |
 | Local result changes the global algorithm or protection model | Primary coordinator |
 | More logs/traces/dumps/candidates are needed | Luna bulk evidence pass |
 | Bulk evidence exposes a precise semantic anomaly | Terra for local meaning; coordinator if globally coupled |
@@ -126,4 +128,4 @@ Measure fan-out by independent evidence products or semantic questions, not func
 
 ## 6. Replan threshold
 
-Request primary-coordinator replanning when local scope becomes global, a protection assumption fails, evidence coverage is inadequate, an artifact identity changes, or accepted interpretations/dependencies become invalid. Ordinary local evidence gaps stay with the same Terra; ordinary bulk-input gaps extend the Luna manifest or batch.
+Request primary-coordinator replanning when local scope becomes global, a protection assumption fails, evidence coverage is inadequate, an artifact identity changes, or accepted interpretations/dependencies become invalid. Ordinary local evidence gaps stay with the same Terra only when the supplied slice or a coordinator-issued delta covers them; ordinary bulk-input gaps extend the Luna manifest or batch.

@@ -11,7 +11,7 @@ description: >-
   cohesive end-to-end Tasks with shared project context so workers do not
   repeat repository discovery.
 metadata:
-  version: "0.3.6"
+  version: "0.3.7"
 ---
 
 # Orca Software Development
@@ -23,6 +23,8 @@ Complete development work with a user-facing primary coordinator, persistent Ter
 - With a live Orca Dispatch preamble and Task block, act only as that worker, follow the injected lifecycle, send `worker_done` once, and do not create nested orchestration.
 - Otherwise act as the primary coordinator. Own user interaction, design, input/output and behavior contracts, task boundaries, global decisions, and final project acceptance.
 - Direct user instructions override inherited worker history. Never reuse settled lifecycle IDs.
+
+A delegated Task is a closed authority envelope. Its objective and acceptance criteria do not authorize a worker to expand the stated lane, read/write scope, evidence budget, or decision authority. Scope is defined by the files, symbols, logs, commands, manifests, and behavior question explicitly supplied by the coordinator, not by everything transitively discovered while solving it. Stop the affected branch and return the applicable scope, bulk-evidence, or contract-decision request instead of widening the work independently.
 
 ## Choose the execution shape
 

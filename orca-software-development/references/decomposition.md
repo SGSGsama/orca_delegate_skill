@@ -111,7 +111,9 @@ A high-tier coordinator decision or review must produce a TaskGraphLite, Decisio
 
 ### Terra XHigh composer
 
-Use as the semantic lane composer for unknown-cause failures, broad local reasoning, high coupling, migrations, hard concurrency/state-machine work, performance diagnosis, difficult test failures, integration of accepted Luna leaf artifacts, or expanded scope. Terra produces the cohesive review-ready result but does not dispatch nested workers.
+Use as the semantic lane composer for unknown-cause failures, broad local reasoning, high coupling, migrations, hard concurrency/state-machine work, performance diagnosis, difficult test failures, integration of accepted Luna leaf artifacts, or coordinator-approved expanded scope. Terra produces the cohesive review-ready result but does not dispatch nested workers.
+
+Terra may inspect Task-named logs and bounded adjacent context when causal interpretation requires raw evidence. It must not independently broaden that inspection into corpus-wide enumeration, repeated-run/platform comparison, or schema-driven bulk extraction; return `NEED_BULK_EVIDENCE` for a Luna pass. Neither a warm lane nor a transitive code/log discovery expands the current Task authority without a coordinator-issued delta.
 
 ### Luna Max
 

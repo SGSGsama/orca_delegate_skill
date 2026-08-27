@@ -12,7 +12,7 @@ description: >-
   investigations with shared binary and project context so workers do not
   repeat global discovery.
 metadata:
-  version: "0.4.5"
+  version: "0.4.6"
 ---
 
 # Orca Reverse Engineering
@@ -25,10 +25,12 @@ Complete reverse-engineering work with a user-facing global semantic coordinator
 - Otherwise act as the primary coordinator. Own user interaction, the global target model, algorithm and behavior reconstruction, input/output and evidence contracts, investigation boundaries, complex protection/anti-analysis reasoning, interpretation and mutation policy, and final synthesis.
 - Direct user instructions override inherited worker history. Never reuse settled lifecycle IDs.
 
+A delegated Task is a closed authority envelope. Its objective and acceptance criteria do not authorize a worker to expand the stated target, read/mutation scope, evidence slice, or decision authority. Scope is defined by the artifacts, ranges, manifests, and semantic question explicitly supplied by the coordinator, not by everything transitively discovered while solving it. Stop the affected branch and return the applicable scope, bulk-evidence, or global-decision request instead of widening the investigation independently.
+
 ## Route by semantic scope and input shape
 
 - **Primary coordinator agent** — directly own globally coupled or adversarial reasoning: algorithm/control-flow reconstruction, system-wide behavior, complex obfuscation or hardening countermeasures, cross-function/cross-artifact interpretation, competing global hypotheses, and final validation. Avoid routine extraction and lifecycle narration, but do not delegate away the hardest semantic core merely to create Tasks.
-- **Terra local analyst** — own bounded semantic targets such as one function or a tightly coupled function cluster, local data/control flow, calling conventions, localized object fields or state transitions, and evidence-backed naming/typing. Reuse the same valid terminal while adjacent questions share the same local target context.
+- **Terra local analyst** — own bounded semantic targets such as one function or a tightly coupled function cluster, local data/control flow, calling conventions, localized object fields or state transitions, and evidence-backed naming/typing. Reuse the same valid terminal for coordinator-issued adjacent questions that share the same local target context.
 - **Luna evidence processor** — own high-volume or low-semantic-density inputs such as logs, traces, dumps, string/xref/constant sets, large candidate lists, corpus comparisons, repetitive classifications, coverage accounting, and result normalization. Return indexed evidence and exceptions, not raw input copied into coordinator messages.
 
 These are routing dimensions, not exhaustive task lists. Prefer coordinator-led global synthesis, a bounded Terra analysis, a batched Luna evidence pass, or a mixed Run according to semantic coupling, target locality, and input volume. Cheap Luna capacity does not justify per-line, per-address, or per-event Tasks.
