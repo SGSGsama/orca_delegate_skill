@@ -17,13 +17,21 @@ Every worker Task starts with exactly one persisted profile:
 [worker-profile: agent=codex model=gpt-5.6-luna effort=max]
 ```
 
+Start every fresh worker through [the profiled dispatch script](../scripts/dispatch_profiled_worker.sh). Resolve its absolute path from the loaded `SKILL.md`; do not assume the target repository has a `scripts/` directory:
+
+```bash
+<skill-directory>/scripts/dispatch_profiled_worker.sh --task <task_id> --worktree current
+```
+
+The script reads the full Task spec from the bound Run and permits only `codex/gpt-5.6-terra/max` or `codex/gpt-5.6-luna/max`. It rejects missing, malformed, downgraded, or caller-overridden profiles before launch, calls the composed `worker-start` path, and checks both `launch.requested` and `launch.effective`. Do not reconstruct a profile from coordinator memory or call fresh `worker-start` directly, including after compaction. A nonzero script result may still describe residual or live resources; follow its JSON receipt and do not retry automatically.
+
 For launch, retry, replacement, or resumed work:
 
 1. re-read the Task profile;
-2. launch with that exact profile as the live guide requires;
+2. for a fresh terminal, launch through the profiled dispatch script with that exact profile;
 3. verify requested and effective profile in the launch receipt;
 4. treat mismatch as launch failure, not permission to silently downgrade;
-5. reuse an existing terminal only when Orca proves it has the same effective profile and reuse is valid.
+5. reuse an existing terminal only when `worker-show` proves it has the same effective profile and reuse is valid; the script intentionally rejects `--terminal` because model/effort cannot be reapplied there.
 
 After a long wait, context compaction, or coordinator restart, reconstruct durable facts from live Orca Tasks/Dispatches plus durable artifact evidence, not free-form coordinator memory. Maintain this minimal transient resume capsule in compact turn state:
 
@@ -31,6 +39,7 @@ After a long wait, context compaction, or coordinator restart, reconstruct durab
 role=primary_coordinator
 run_id=<id> context_version=<version-or-ref>
 accepted_global_model=<refs> outstanding=<Task/Dispatch/profile/warm-terminal tuples>
+profiled_dispatch=<absolute skill script path> fresh_launch=script_only
 delivery_gate=<passed-or-not-applicable>
 wait_epoch=<id> think_before_wait=<consumed-or-pending>
 wait_state=<active|none> wait_handle=<exact live host handle>
@@ -40,7 +49,7 @@ next_action=<resume_same_wait-or-explicit lifecycle action>
 model_observation=silent_until_event
 ```
 
-This is control state, not a progress narrative. Preserve exact identifiers, artifact/database revisions, model/effort profiles, the full lifecycle filter, accepted hypotheses, and consumed gates; a resume must not silently downgrade effort or drop a message type such as `question`. Do not recreate or reinterpret these fields after compaction. If `wait_state=active`, execute only `next_action=resume_same_wait` until a `wake_on` event occurs. The timeout is runtime control state, not a model countdown. If the saved host handle is explicitly invalid after restart, enter wait-failure recovery once rather than guessing or creating parallel waiters. Never persist transient process handles in Git or analysis artifacts.
+This is control state, not a progress narrative. Preserve exact identifiers, artifact/database revisions, model/effort profiles, the absolute profiled-dispatch path and script-only fresh-launch policy, the full lifecycle filter, accepted hypotheses, and consumed gates; a resume must not silently downgrade effort or drop a message type such as `question`. Do not recreate or reinterpret these fields after compaction. If `wait_state=active`, execute only `next_action=resume_same_wait` until a `wake_on` event occurs. The timeout is runtime control state, not a model countdown. If the saved host handle is explicitly invalid after restart, enter wait-failure recovery once rather than guessing or creating parallel waiters. Never persist transient process handles in Git or analysis artifacts.
 
 Treat a Terra terminal as the context owner of its bounded local target, not as a disposable phase worker. Before release, check whether an adjacent function, local hypothesis, or evidence gap uses substantially the same target context; if so, create the next Task from the local delta and reuse that exact terminal. Do not make a replacement analyst reload the same functions, IL, tool state, and evidence slices.
 
