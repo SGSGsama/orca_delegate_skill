@@ -1,1 +1,1 @@
-两个自用的简单skill，用于在orca把一些简单任务分派给子agent来节省sol模型的额度消耗
+自用的简单skill，用于在orca把一些简单任务分派给子agent来节省sol模型的额度消耗
