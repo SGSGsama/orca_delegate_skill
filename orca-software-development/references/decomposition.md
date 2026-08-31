@@ -2,6 +2,12 @@
 
 Load this file only when triage, task boundaries, routing, or safe parallelism are not already obvious.
 
+## 0. Execution ownership authority
+
+`orca-software-development` is the exclusive execution-ownership authority for software Tasks. Use other skills only as capability, domain, tool, or procedure guidance after this skill assigns the direct/Terra/Luna owner. They cannot assign or retain ownership. Record `execution_owner_skill: orca-software-development` in Run Context and TaskGraphLite; a delegated Task uses the exact second line `[execution-owner: skill=orca-software-development]`.
+
+For mixed work, classify by deliverable rather than tool: source, tests, builds, packaging, and implementation belong here even when Binary Ninja or another specialist tool is used. Separately bounded reverse-engineering evidence or reconstruction may instead be owned by `orca-reverse-engineering`.
+
 ## 1. Triage
 
 Choose the smallest reliable execution shape.
@@ -17,7 +23,7 @@ Use when all are true:
 - one focused validation path can establish completion;
 - delegation would cost at least as much context preparation as execution.
 
-Stop the direct path once broad discovery or cross-module reasoning becomes necessary.
+Direct ownership is not sticky. Stop and re-route before the next mutation when broad discovery or cross-module reasoning becomes necessary, the originally identified symbols/files no longer bound the work, a focused reproduction leaves root cause unresolved, a second independent failure/case appears, or work introduces a corpus scan, batch driver, or multi-case validation. Scope expansion initiated by the coordinator is a new routing event. After context compaction, re-prove and record every direct criterion before mutating; otherwise revoke the direct path and create or bind an Orca Run.
 
 ### Single worker
 
@@ -33,6 +39,8 @@ Keep a compact shared packet or reference with:
 
 ```text
 Objective
+Execution ownership skill and current execution shape
+Direct basis and revocation state, if direct
 Accepted architecture/contracts
 Relevant repository instructions
 Base revision and user-owned local changes
@@ -144,4 +152,4 @@ Measure fan-out by independent acceptance units, not source-file or input-item c
 
 ## 6. Replan threshold
 
-Avoid routine primary-coordinator replanning. Replan there for material new facts, invalidated assumptions, contract changes, dependency changes, scope expansion that invalidates current Tasks, or whenever direct coordinator judgment would materially improve the result.
+Avoid routine primary-coordinator replanning. Replan there for material new facts, invalidated assumptions, contract changes, dependency changes, scope expansion that invalidates current Tasks, or whenever direct coordinator judgment would materially improve the result. Re-run the ownership decision whenever a direct-path revocation trigger fires or a Task crosses from reverse-engineering evidence into software implementation; only `orca-software-development` may assign the resulting software execution owner.

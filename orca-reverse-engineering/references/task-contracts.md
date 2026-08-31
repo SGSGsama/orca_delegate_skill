@@ -20,6 +20,7 @@ The worker profile must be the first line.
 
 ```text
 [worker-profile: agent=codex model=gpt-5.6-terra effort=max]
+[execution-owner: skill=orca-reverse-engineering]
 Task: T2
 Type: bulk-evidence | function | cluster | local-dataflow | local-structure | hypothesis-test | propagation | validation
 Objective: <one independently checkable evidence product or local conclusion>
@@ -43,12 +44,14 @@ Use the Terra profile for bounded local semantics. Use this Luna profile when bu
 
 ```text
 [worker-profile: agent=codex model=gpt-5.6-luna effort=max]
+[execution-owner: skill=orca-reverse-engineering]
 ```
 
 ## Luna bulk-evidence Task
 
 ```text
 [worker-profile: agent=codex model=gpt-5.6-luna effort=max]
+[execution-owner: skill=orca-reverse-engineering]
 Type: bulk-evidence
 Objective: transform <large input set> into <indexed evidence product>
 Input manifest: <logs/traces/dumps/exports/candidates/samples + identities>
@@ -68,6 +71,7 @@ Use one batch per coherent input source and evidence question, not one Task per 
 
 ```text
 [worker-profile: agent=codex model=gpt-5.6-terra effort=max]
+[execution-owner: skill=orca-reverse-engineering]
 Type: function | cluster | local-dataflow | hypothesis-test
 Objective: determine <one bounded semantic question>
 Target: <exact function(s), addresses, IL/tool views, artifact revision>
@@ -89,6 +93,7 @@ The evidence slice is Terra's context budget, not merely a starting point. Terra
 
 ```text
 [worker-profile: agent=codex model=gpt-5.6-terra effort=max]
+[execution-owner: skill=orca-reverse-engineering]
 Type: local-structure
 Objective: recover <bounded object/state/parser-stage subset>
 Target: <exact functions, offsets, state values, or transition slice>
@@ -106,6 +111,7 @@ Return: local mapping/model; evidence per field/edge; confidence; conflicts; mut
 
 ```text
 [worker-profile: agent=codex model=gpt-5.6-luna effort=max]
+[execution-owner: skill=orca-reverse-engineering]
 Type: propagation
 Objective: apply the accepted mapping without new semantic invention
 Approved mapping: <old -> new names; offsets -> fields/types; comments/annotations>
@@ -183,6 +189,7 @@ Materialize only orchestration facts. Keep absolute tool/database/input location
 
 ```json
 {
+  "execution_owner_skill": "orca-reverse-engineering",
   "tasks": [
     {
       "id": "L1",
@@ -227,6 +234,7 @@ Default output is decision-focused; expand when the global reasoning or user nee
 
 ```text
 INITIAL
+Execution owner skill: orca-reverse-engineering
 Global question and requested output
 Algorithm/behavior/protection hypotheses
 Evidence standard and behavioral oracle

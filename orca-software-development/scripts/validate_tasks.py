@@ -11,6 +11,7 @@ from pathlib import PurePosixPath
 ROLES = {"luna-max", "terra-xhigh", "coordinator", "read-only"}
 RISKS = {"low", "medium", "high"}
 GLOB_CHARS = "*?["
+EXECUTION_OWNER_SKILL = "orca-software-development"
 
 
 def norm_path(value: str) -> str:
@@ -72,6 +73,13 @@ def transitive_dep(tasks: dict[str, dict], src: str, target: str, seen=None) -> 
 def validate(data: dict) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
+    if not isinstance(data, dict):
+        return ["top-level input must be an object"], []
+    if data.get("execution_owner_skill") != EXECUTION_OWNER_SKILL:
+        errors.append(
+            "top-level execution_owner_skill must be "
+            f"{EXECUTION_OWNER_SKILL!r}; other skills cannot own software Tasks"
+        )
     raw = data.get("tasks")
     if not isinstance(raw, list) or not raw:
         return ["top-level 'tasks' must be a non-empty list"], []
@@ -163,23 +171,23 @@ def validate(data: dict) -> tuple[list[str], list[str]]:
 
 
 def self_test() -> int:
-    good = {"tasks": [
+    good = {"execution_owner_skill": EXECUTION_OWNER_SKILL, "tasks": [
         {"id": "T1", "role": "terra-xhigh", "depends_on": [], "read": ["src/a.ts"], "write": ["src/a.ts"], "risk": "medium"},
         {"id": "T2", "role": "luna-max", "depends_on": ["T1"], "read": ["src/a.ts"], "write": ["tests/a.test.ts"], "risk": "low"},
     ]}
-    bad = {"tasks": [
+    bad = {"execution_owner_skill": EXECUTION_OWNER_SKILL, "tasks": [
         {"id": "A", "role": "luna-max", "depends_on": [], "read": [], "write": ["src/**"], "risk": "low"},
         {"id": "B", "role": "terra-xhigh", "depends_on": [], "read": [], "write": ["src/x.ts"], "risk": "medium"},
     ]}
-    intersecting_globs = {"tasks": [
+    intersecting_globs = {"execution_owner_skill": EXECUTION_OWNER_SKILL, "tasks": [
         {"id": "G1", "role": "luna-max", "depends_on": [], "read": [], "write": ["src/auth/*.ts"], "risk": "low"},
         {"id": "G2", "role": "terra-xhigh", "depends_on": [], "read": [], "write": ["src/**/service.ts"], "risk": "medium"},
     ]}
-    disjoint_globs = {"tasks": [
+    disjoint_globs = {"execution_owner_skill": EXECUTION_OWNER_SKILL, "tasks": [
         {"id": "D1", "role": "luna-max", "depends_on": [], "read": [], "write": ["src/auth/*.ts"], "risk": "low"},
         {"id": "D2", "role": "terra-xhigh", "depends_on": [], "read": [], "write": ["tests/auth/*.ts"], "risk": "medium"},
     ]}
-    malformed = {"tasks": [
+    malformed = {"execution_owner_skill": EXECUTION_OWNER_SKILL, "tasks": [
         {"id": "M1", "role": "luna-max", "depends_on": None, "read": [], "write": None, "risk": "low"},
     ]}
     e1, _ = validate(good)
@@ -187,12 +195,14 @@ def self_test() -> int:
     e3, _ = validate(intersecting_globs)
     e4, _ = validate(disjoint_globs)
     e5, _ = validate(malformed)
+    e6, _ = validate({"execution_owner_skill": "bn", "tasks": good["tasks"]})
     assert not e1, e1
     assert any("parallel write overlap" in x for x in e2), e2
     assert any("parallel write overlap" in x for x in e3), e3
     assert not e4, e4
     assert any("depends_on must be a string list" in x for x in e5), e5
     assert any("write must be a string list" in x for x in e5), e5
+    assert any("execution_owner_skill" in x for x in e6), e6
     print("self-test: ok")
     return 0
 

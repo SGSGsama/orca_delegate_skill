@@ -2,8 +2,9 @@
 set -euo pipefail
 
 # Start one fresh supervised worker from the profile persisted on the Task's
-# first line. Refuse caller-supplied profile overrides and verify Orca's launch
-# receipt before reporting success.
+# first line and execution owner persisted on its second line. Refuse caller-
+# supplied ownership/profile overrides and verify Orca's launch receipt before
+# reporting success.
 
 usage() {
   cat <<'EOF'
@@ -21,13 +22,14 @@ Forwarded when present:
 
 The Task spec must start with exactly:
   [worker-profile: agent=<agent> model=<model> effort=<effort>]
+  [execution-owner: skill=orca-software-development]
 
 Allowed profiles for orca-software-development:
   codex / gpt-5.6-terra / xhigh
   codex / gpt-5.6-luna  / max
 
 This script intentionally rejects --agent, --model, --effort, --terminal, and
---json. The persisted Task profile and JSON receipt are authoritative.
+--json. The persisted Task ownership/profile and JSON receipt are authoritative.
 EOF
 }
 
@@ -40,7 +42,7 @@ need_value() {
   [ "$#" -ge 2 ] || die "$1 requires a value"
 }
 
-extract_task_profile() {
+extract_task_launch_contract() {
   python3 - "$1" "$2" <<'PY'
 import json
 import re
@@ -72,14 +74,23 @@ if len(specs) != 1:
 
 lines = specs[0].splitlines()
 first = lines[0] if lines else ""
+second = lines[1] if len(lines) > 1 else ""
 match = re.fullmatch(
     r"\[worker-profile: agent=([^\s\]]+) model=([^\s\]]+) effort=([^\s\]]+)\]",
     first,
 )
 if not match:
     raise SystemExit("Task first line is missing or has an invalid worker-profile")
+owner = re.fullmatch(r"\[execution-owner: skill=([^\s\]]+)\]", second)
+if not owner:
+    raise SystemExit("Task second line is missing or has an invalid execution-owner")
+if owner.group(1) != "orca-software-development":
+    raise SystemExit(
+        "Task execution owner must be orca-software-development, "
+        f"got {owner.group(1)!r}"
+    )
 
-print("\t".join(match.groups()))
+print("\t".join((*match.groups(), owner.group(1))))
 PY
 }
 
@@ -160,7 +171,7 @@ run_self_test() {
   command -v python3 >/dev/null 2>&1 || die "python3 is required"
   profiled_tmp_dir=$(mktemp -d "${TMPDIR:-/tmp}/orca-profiled-worker.XXXXXX")
   cat >"$profiled_tmp_dir/tasks.json" <<'JSON'
-{"ok":true,"result":{"tasks":[{"id":"T1","spec":"[worker-profile: agent=codex model=gpt-5.6-terra effort=xhigh]\nTask: T1"}]}}
+{"ok":true,"result":{"tasks":[{"id":"T1","spec":"[worker-profile: agent=codex model=gpt-5.6-terra effort=xhigh]\n[execution-owner: skill=orca-software-development]\nTask: T1"},{"id":"T2","spec":"[worker-profile: agent=codex model=gpt-5.6-terra effort=xhigh]\n[execution-owner: skill=bn]\nTask: T2"},{"id":"T3","spec":"[worker-profile: agent=codex model=gpt-5.6-terra effort=xhigh]\nTask: T3"}]}}
 JSON
   cat >"$profiled_tmp_dir/receipt.json" <<'JSON'
 {"ok":true,"result":{"launch":{"requested":{"agent":"codex","model":"gpt-5.6-terra","effort":"xhigh"},"effective":{"agent":"codex","model":"gpt-5.6-terra","effort":"xhigh"}}}}
@@ -168,8 +179,14 @@ JSON
   cat >"$profiled_tmp_dir/bad-receipt.json" <<'JSON'
 {"ok":true,"result":{"launch":{"requested":{"agent":"codex","model":"gpt-5.6-terra","effort":"xhigh"},"effective":{"agent":"codex","model":"gpt-5.6-terra","effort":"medium"}}}}
 JSON
-  profile=$(extract_task_profile "$profiled_tmp_dir/tasks.json" T1)
-  [ "$profile" = $'codex\tgpt-5.6-terra\txhigh' ] || die "profile parser self-test failed"
+  profile=$(extract_task_launch_contract "$profiled_tmp_dir/tasks.json" T1)
+  [ "$profile" = $'codex\tgpt-5.6-terra\txhigh\torca-software-development' ] || die "Task launch-contract parser self-test failed"
+  if extract_task_launch_contract "$profiled_tmp_dir/tasks.json" T2 >/dev/null 2>&1; then
+    die "execution-owner allowlist self-test failed"
+  fi
+  if extract_task_launch_contract "$profiled_tmp_dir/tasks.json" T3 >/dev/null 2>&1; then
+    die "missing execution-owner self-test failed"
+  fi
   assert_allowed_profile codex gpt-5.6-terra xhigh
   assert_allowed_profile codex gpt-5.6-luna max
   if assert_allowed_profile codex gpt-5.6-terra medium >/dev/null 2>&1; then
@@ -262,11 +279,11 @@ if [ "$task_status" -ne 0 ]; then
   exit "$task_status"
 fi
 
-if ! extract_task_profile "$profiled_tmp_dir/tasks.json" "$task_id" >"$profiled_tmp_dir/profile.tsv"; then
-  die "could not load an authoritative worker profile for Task $task_id"
+if ! extract_task_launch_contract "$profiled_tmp_dir/tasks.json" "$task_id" >"$profiled_tmp_dir/profile.tsv"; then
+  die "could not load an authoritative execution owner and worker profile for Task $task_id"
 fi
-IFS=$'\t' read -r profile_agent profile_model profile_effort <"$profiled_tmp_dir/profile.tsv"
-[ -n "$profile_agent" ] && [ -n "$profile_model" ] && [ -n "$profile_effort" ] || die "Task profile is incomplete"
+IFS=$'\t' read -r profile_agent profile_model profile_effort execution_owner <"$profiled_tmp_dir/profile.tsv"
+[ -n "$profile_agent" ] && [ -n "$profile_model" ] && [ -n "$profile_effort" ] && [ "$execution_owner" = "orca-software-development" ] || die "Task ownership/profile contract is incomplete"
 assert_allowed_profile "$profile_agent" "$profile_model" "$profile_effort" || exit 2
 
 worker_cmd=(

@@ -8,13 +8,18 @@ Before Orca operations, read the installed `orca-cli` and `orchestration` skills
 
 Orca owns live Run/Task/Dispatch/message state. Git commits and diffs are durable implementation evidence.
 
-## 2. Worker profile persistence
+## 2. Worker ownership and profile persistence
 
-Every worker Task starts with exactly one persisted profile:
+Every worker Task starts with exactly one persisted profile first line chosen by `orca-software-development`, followed by its fixed execution-owner second line:
 
 ```text
 [worker-profile: agent=codex model=gpt-5.6-luna effort=max]
+[execution-owner: skill=orca-software-development]
+
+or
+
 [worker-profile: agent=codex model=gpt-5.6-terra effort=xhigh]
+[execution-owner: skill=orca-software-development]
 ```
 
 Start every fresh worker through [the profiled dispatch script](../scripts/dispatch_profiled_worker.sh). Resolve its absolute path from the loaded `SKILL.md`; do not assume the target repository has a `scripts/` directory:
@@ -23,11 +28,11 @@ Start every fresh worker through [the profiled dispatch script](../scripts/dispa
 <skill-directory>/scripts/dispatch_profiled_worker.sh --task <task_id> --worktree current
 ```
 
-The script reads the full Task spec from the bound Run and permits only `codex/gpt-5.6-terra/xhigh` or `codex/gpt-5.6-luna/max`. It rejects missing, malformed, downgraded, or caller-overridden profiles before launch, calls the composed `worker-start` path, and checks both `launch.requested` and `launch.effective`. Do not reconstruct a profile from coordinator memory or call fresh `worker-start` directly, including after compaction. A nonzero script result may still describe residual or live resources; follow its JSON receipt and do not retry automatically.
+The script reads the full Task spec from the bound Run, requires ownership by `orca-software-development`, and permits only `codex/gpt-5.6-terra/xhigh` or `codex/gpt-5.6-luna/max`. It rejects missing, malformed, foreign-skill-owned, downgraded, or caller-overridden contracts before launch, calls the composed `worker-start` path, and checks both `launch.requested` and `launch.effective`. Do not reconstruct ownership or profile from coordinator memory or call fresh `worker-start` directly, including after compaction. A nonzero script result may still describe residual or live resources; follow its JSON receipt and do not retry automatically.
 
 For launch, retry, replacement, or resumed work:
 
-1. re-read the Task profile;
+1. re-read the Task execution owner and profile;
 2. for a fresh terminal, launch through the profiled dispatch script with that exact profile;
 3. verify requested and effective profile in the launch receipt;
 4. treat mismatch as launch failure, not permission to silently downgrade;
@@ -37,6 +42,8 @@ After a long wait, context compaction, or coordinator restart, reconstruct durab
 
 ```text
 role=primary_coordinator
+execution_owner_skill=orca-software-development execution_shape=<direct|single-terra-composer|multi-agent>
+direct_basis=<criteria-ref-or-not-applicable> direct_revoked=<true|false>
 run_id=<id> context_version=<version-or-ref>
 accepted_contracts=<refs> outstanding=<Task/Dispatch/profile/warm-terminal tuples>
 profiled_dispatch=<absolute skill script path> fresh_launch=script_only
@@ -49,7 +56,7 @@ next_action=<resume_same_wait-or-explicit lifecycle action>
 model_observation=silent_until_event
 ```
 
-This is control state, not a progress narrative. Preserve exact identifiers, model/effort profiles, the absolute profiled-dispatch path and script-only fresh-launch policy, the full lifecycle filter, and consumed gates; a resume must not silently downgrade effort or drop a message type such as `question`. Do not recreate or reinterpret these fields after compaction. If `wait_state=active`, execute only `next_action=resume_same_wait` until a `wake_on` event occurs. The timeout is runtime control state, not a model countdown. If the saved host handle is explicitly invalid after restart, enter wait-failure recovery once rather than guessing or creating parallel waiters. Never persist transient process handles in Git.
+This is control state, not a progress narrative. Preserve the execution owner, shape/direct basis, exact identifiers, model/effort profiles, the absolute profiled-dispatch path and script-only fresh-launch policy, the full lifecycle filter, and consumed gates; a resume must not let another skill claim ownership, silently downgrade effort, or drop a message type such as `question`. Do not recreate or reinterpret these fields after compaction. If no active Run exists, re-evaluate the recorded direct basis under `orca-software-development` before any mutation; absent Run state is not evidence that direct ownership remains valid. If `wait_state=active`, execute only `next_action=resume_same_wait` until a `wake_on` event occurs. The timeout is runtime control state, not a model countdown. If the saved host handle is explicitly invalid after restart, enter wait-failure recovery once rather than guessing or creating parallel waiters. Never persist transient process handles in Git.
 
 Treat the Terra terminal as the composer and context owner of its semantic lane, not as a disposable phase worker. Before release, check whether the accepted result has an immediate inspect/implement/compose/test/repair continuation in the same lane; if so, create the next Task from the lane delta and reuse that exact terminal. A lower nominal Luna price does not justify discarding warm Terra context.
 
@@ -160,6 +167,7 @@ Before high-tier review or after a substantial wave, compact results into:
 
 ```text
 Run/base/integration head
+Execution ownership skill, execution shape, and direct revocation state
 Selected liveness interval and last true timeout/checkpoint
 Outstanding Task/Dispatch IDs and persisted worker profiles
 Tasks done/blocked/failed

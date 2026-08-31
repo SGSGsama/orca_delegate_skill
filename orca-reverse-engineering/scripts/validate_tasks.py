@@ -11,6 +11,7 @@ from pathlib import PurePosixPath
 ROLES = {"terra-max", "luna-max", "coordinator", "read-only"}
 RISKS = {"low", "medium", "high"}
 GLOB_CHARS = "*?["
+EXECUTION_OWNER_SKILL = "orca-reverse-engineering"
 
 
 def norm_scope(value: str) -> str:
@@ -72,6 +73,11 @@ def validate(data: dict) -> tuple[list[str], list[str]]:
     warnings: list[str] = []
     if not isinstance(data, dict):
         return ["top-level input must be an object"], []
+    if data.get("execution_owner_skill") != EXECUTION_OWNER_SKILL:
+        errors.append(
+            "top-level execution_owner_skill must be "
+            f"{EXECUTION_OWNER_SKILL!r}; other skills cannot own reverse-engineering Tasks"
+        )
     raw = data.get("tasks")
     if not isinstance(raw, list) or not raw:
         return ["top-level 'tasks' must be a non-empty list"], []
@@ -173,19 +179,19 @@ def validate(data: dict) -> tuple[list[str], list[str]]:
 
 
 def self_test() -> int:
-    good = {"tasks": [
+    good = {"execution_owner_skill": EXECUTION_OWNER_SKILL, "tasks": [
         {"id": "T1", "role": "terra-max", "depends_on": [], "read": ["binary/main/functions/receive/**"], "mutate": [], "risk": "medium"},
         {"id": "T2", "role": "luna-max", "depends_on": ["T1"], "read": ["analysis/main.bndb/functions/receive/**"], "mutate": ["analysis/main.bndb/names/receive/**"], "risk": "low"},
     ]}
-    overlap = {"tasks": [
+    overlap = {"execution_owner_skill": EXECUTION_OWNER_SKILL, "tasks": [
         {"id": "A", "role": "luna-max", "depends_on": [], "read": [], "mutate": ["analysis/main.bndb/names/receive/*.fn"], "risk": "low"},
         {"id": "B", "role": "terra-max", "depends_on": [], "read": [], "mutate": ["analysis/main.bndb/**/receive.fn"], "risk": "medium"},
     ]}
-    disjoint = {"tasks": [
+    disjoint = {"execution_owner_skill": EXECUTION_OWNER_SKILL, "tasks": [
         {"id": "D1", "role": "luna-max", "depends_on": [], "read": [], "mutate": ["analysis/a.bndb/names/**"], "risk": "low"},
         {"id": "D2", "role": "luna-max", "depends_on": [], "read": [], "mutate": ["reports/b.md/sections/**"], "risk": "low"},
     ]}
-    malformed = {"tasks": [
+    malformed = {"execution_owner_skill": EXECUTION_OWNER_SKILL, "tasks": [
         {"id": "M1", "role": "terra-max", "depends_on": None, "read": None, "mutate": None, "risk": "medium"},
     ]}
 
@@ -193,12 +199,14 @@ def self_test() -> int:
     overlap_errors, _ = validate(overlap)
     disjoint_errors, _ = validate(disjoint)
     malformed_errors, _ = validate(malformed)
+    owner_errors, _ = validate({"execution_owner_skill": "bn", "tasks": good["tasks"]})
     assert not good_errors, good_errors
     assert any("parallel mutation overlap" in item for item in overlap_errors), overlap_errors
     assert not disjoint_errors, disjoint_errors
     assert any("depends_on must be a string list" in item for item in malformed_errors), malformed_errors
     assert any("read must be a string list" in item for item in malformed_errors), malformed_errors
     assert any("mutate must be a string list" in item for item in malformed_errors), malformed_errors
+    assert any("execution_owner_skill" in item for item in owner_errors), owner_errors
     print("self-test: ok")
     return 0
 

@@ -20,6 +20,7 @@ The worker profile must be the first line.
 
 ```text
 [worker-profile: agent=codex model=gpt-5.6-luna effort=max]
+[execution-owner: skill=orca-software-development]
 Task: T2
 Type: composition | implementation | diagnosis | tests | review | repair
 Objective: <one verifiable outcome>
@@ -130,6 +131,7 @@ When deterministic preflight is useful, materialize only orchestration facts:
 
 ```json
 {
+  "execution_owner_skill": "orca-software-development",
   "tasks": [
     {
       "id": "T1",
@@ -177,6 +179,7 @@ Default primary-coordinator output is sparse and decision-shaped. Expand it when
 ```text
 INITIAL
 Shape: direct | single-terra-composer | multi-agent
+Execution owner skill: orca-software-development
 TaskGraph/context refs: <paths or IDs>
 Design and input/output contract: <only what workers need>
 Behavior oracle: <user-visible acceptance>

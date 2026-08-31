@@ -6,13 +6,17 @@ description: >-
   function clusters, protocol or state-machine recovery, object layouts,
   crypto or serialization, cross-binary correlation, competing hypotheses,
   comprehensive reviews, and explicit requests for Orca, Terra/Luna,
-  parallel, or multi-agent analysis. Let the primary coordinator agent answer
-  a bounded read-only lookup directly when the exact target, single question,
-  and evidence path are already clear. When delegating, send cohesive
-  investigations with shared binary and project context so workers do not
-  repeat global discovery.
+  parallel, or multi-agent analysis. Also activate when a bounded lookup grows
+  into multiple targets, artifacts, hypotheses, bulk evidence, or mutations,
+  including after context compaction. This skill exclusively owns reverse-
+  engineering Task execution shape and primary/Terra/Luna assignment; tool and
+  method skills constrain how the assigned owner works but cannot assign
+  ownership. Let the primary coordinator agent answer a bounded read-only lookup
+  directly only while the exact target, single question, and evidence path
+  remain clear. When delegating, send cohesive investigations with shared
+  binary and project context so workers do not repeat global discovery.
 metadata:
-  version: "0.4.8"
+  version: "0.5.0"
 ---
 
 # Orca Reverse Engineering
@@ -27,6 +31,12 @@ Complete reverse-engineering work with a user-facing global semantic coordinator
 
 A delegated Task is a closed authority envelope. Its objective and acceptance criteria do not authorize a worker to expand the stated target, read/mutation scope, evidence slice, or decision authority. Scope is defined by the artifacts, ranges, manifests, and semantic question explicitly supplied by the coordinator, not by everything transitively discovered while solving it. Stop the affected branch and return the applicable scope, bulk-evidence, or global-decision request instead of widening the investigation independently.
 
+### Execution ownership authority — exclusive
+
+For every reverse-engineering Task in scope, `$orca-reverse-engineering` is the sole authority for the execution shape, primary-coordinator/Terra/Luna ownership, worker profile, target, evidence budget, and ownership changes. Other active skills—including analysis tools such as `bn`, decompilers, debuggers, and research methods—are subordinate capability or procedure constraints. They may determine how the Orca-assigned owner acquires or interprets evidence, but they must not select, change, preserve, or justify Task ownership or the direct/delegated shape.
+
+Record `execution_owner_skill: orca-reverse-engineering` in global Run Context and TaskGraphLite. Every delegated Task must carry `[execution-owner: skill=orca-reverse-engineering]` immediately after its worker-profile line. Do not cite another skill as Task execution owner. When an investigation produces source, test, build, packaging, or implementation work, route that separately bounded Task to `$orca-software-development`; reverse-engineering evidence and reconstruction remain owned here.
+
 ## Route by semantic scope and input shape
 
 - **Primary coordinator agent** — directly own globally coupled or adversarial reasoning: algorithm/control-flow reconstruction, system-wide behavior, complex obfuscation or hardening countermeasures, cross-function/cross-artifact interpretation, competing global hypotheses, and final validation. Avoid routine extraction and lifecycle narration, but do not delegate away the hardest semantic core merely to create Tasks.
@@ -35,11 +45,13 @@ A delegated Task is a closed authority envelope. Its objective and acceptance cr
 
 These are routing dimensions, not exhaustive task lists. Prefer coordinator-led global synthesis, a bounded Terra analysis, a batched Luna evidence pass, or a mixed Run according to semantic coupling, target locality, and input volume. Cheap Luna capacity does not justify per-line, per-address, or per-event Tasks.
 
+Direct lookup ownership is not sticky. Before continuing, revoke and re-route it when the work ceases to be read-only, the exact target/question/evidence path expands, a second independent target or hypothesis appears, bulk evidence or repeated cases are needed, or source implementation begins. Coordinator-initiated scope expansion is a new routing event. Globally coupled semantic synthesis may remain with the primary coordinator only as an explicit `$orca-reverse-engineering` ownership decision; route bounded local semantics to Terra and high-volume evidence to Luna. After context compaction, perform this ownership check before further inspection or mutation; if the recorded direct basis cannot still be proved, revoke direct lookup ownership and establish the appropriate Run shape.
+
 Read [references/decomposition.md](references/decomposition.md) whenever routing, lane boundaries, batching, or parallel safety is not obvious.
 
 ## Build context once
 
-Pay global target discovery once per Run. The primary coordinator keeps the global model and hypothesis ledger. Luna receives bulk-input manifests plus an extraction/coverage schema; Terra receives exact functions, addresses, local questions, and relevant evidence slices. Pass references and deltas, not coordinator transcripts, raw dumps, or repeated global discovery.
+Pay global target discovery once per Run. The primary coordinator keeps the execution ownership skill, current execution shape, direct basis and revocation state when applicable, global model, and hypothesis ledger. Luna receives bulk-input manifests plus an extraction/coverage schema; Terra receives exact functions, addresses, local questions, and relevant evidence slices. Pass references and deltas, not coordinator transcripts, raw dumps, or repeated global discovery.
 
 Use the evidence pipeline when useful: Luna indexes large inputs, Terra resolves bounded local semantics, and the primary coordinator integrates those results into algorithms, behaviors, and protection-countermeasure conclusions. Skip stages that add no evidence. Keep each Terra target cohesive and each Luna batch broad enough to amortize lifecycle and input-loading cost.
 
@@ -49,7 +61,7 @@ Before creating any delegated Task, read [references/task-contracts.md](referenc
 
 Before the first Orca operation, activate the installed `orca-cli` and `orchestration` skills and follow their current version-matched guidance. Complete the delivery gate once: prove the intended Dispatch exists and the worker has begun processing; staged text without submission is not delivery. On a low-level terminal path, input and submit/Enter are one atomic delivery action—never yield the coordinator turn with the investigation still in the worker's input box.
 
-For every fresh supervised worker launch, use [scripts/dispatch_profiled_worker.sh](scripts/dispatch_profiled_worker.sh) instead of calling `orca orchestration worker-start` directly. The script reloads the Task's first-line profile from Orca state, rejects any tuple outside this skill's fixed Terra/Luna allowlist before launch, supplies its agent/model/effort, and fails closed unless the launch receipt proves identical requested and effective profiles. This remains required after context compaction. Terminal reuse is the only exception because Orca cannot change model/effort on `--terminal`; reuse only after `worker-show` proves that the retained terminal's effective profile exactly matches the next Task and one of the same allowed tuples.
+For every fresh supervised worker launch, use [scripts/dispatch_profiled_worker.sh](scripts/dispatch_profiled_worker.sh) instead of calling `orca orchestration worker-start` directly. The script reloads the Task's first-line profile and second-line execution owner from Orca state, rejects ownership by any skill except `orca-reverse-engineering`, rejects any tuple outside this skill's fixed Terra/Luna allowlist before launch, supplies its agent/model/effort, and fails closed unless the launch receipt proves identical requested and effective profiles. This remains required after context compaction. Terminal reuse is the only exception because Orca cannot change model/effort on `--terminal`; reuse only after the next Task declares this same execution owner and `worker-show` proves that the retained terminal's effective profile exactly matches the Task and one of the same allowed tuples.
 
 ### Event-driven worker waiting — required
 

@@ -2,6 +2,12 @@
 
 Load this file when routing, investigation boundaries, evidence flow, or safe parallelism is not already obvious.
 
+## 0. Execution ownership authority
+
+`orca-reverse-engineering` is the exclusive execution-ownership authority for reverse-engineering Tasks. Use analysis tools and other skills only as capability or procedure guidance after this skill assigns the primary/Terra/Luna owner; they cannot assign or retain ownership. Record `execution_owner_skill: orca-reverse-engineering` in global Run Context and TaskGraphLite; a delegated Task uses the exact second line `[execution-owner: skill=orca-reverse-engineering]`.
+
+Classify mixed work by deliverable. Evidence extraction, local semantic conclusions, and global reconstruction belong here. Source, tests, builds, packaging, and implementation are separately bounded software Tasks whose ownership must be assigned by `orca-software-development`, even when they use reverse-engineering tools or evidence.
+
 ## 1. Route by reverse-engineering work shape
 
 Choose roles from semantic coupling, target locality, input volume, mutability, and falsifiability. The examples below illustrate the dimensions; they are not a closed task catalog.
@@ -18,6 +24,8 @@ Prefer direct primary-coordinator ownership when the hard part is the global int
 - synthesizing local results into the requested reconstruction and validating it against observable behavior.
 
 The coordinator may inspect code, IL, traces, or artifacts directly whenever that is the clearest way to solve the semantic core. Delegate supporting evidence work without delegating away the global reasoning that makes the result coherent.
+
+This direct/global decision is not sticky. Re-route before continuing when a bounded lookup ceases to be read-only, its exact target/question/evidence path expands, a second independent target or hypothesis appears, bulk evidence or repeated cases are needed, or implementation work begins. Coordinator-initiated expansion is a new routing event. After context compaction, re-prove and record the ownership basis before further inspection or mutation; otherwise establish a new Run shape under the applicable Orca ownership skill.
 
 ### Terra: bounded local semantics
 
@@ -56,6 +64,8 @@ Owned by the primary coordinator:
 
 ```text
 Objective and requested output
+Execution ownership skill and current execution shape
+Direct/global basis and revocation state, if applicable
 Artifact identities, hashes, architecture, formats, and revisions
 Subsystem/function map and important entry points
 Accepted global behavior, vocabulary, and evidence standard
@@ -128,4 +138,4 @@ Measure fan-out by independent evidence products or semantic questions, not func
 
 ## 6. Replan threshold
 
-Request primary-coordinator replanning when local scope becomes global, a protection assumption fails, evidence coverage is inadequate, an artifact identity changes, or accepted interpretations/dependencies become invalid. Ordinary local evidence gaps stay with the same Terra only when the supplied slice or a coordinator-issued delta covers them; ordinary bulk-input gaps extend the Luna manifest or batch.
+Request primary-coordinator replanning when local scope becomes global, a protection assumption fails, evidence coverage is inadequate, an artifact identity changes, or accepted interpretations/dependencies become invalid. Ordinary local evidence gaps stay with the same Terra only when the supplied slice or a coordinator-issued delta covers them; ordinary bulk-input gaps extend the Luna manifest or batch. Re-run the ownership decision whenever a direct-path revocation trigger fires or the deliverable crosses into software implementation; only the applicable Orca skill may assign the next owner.
