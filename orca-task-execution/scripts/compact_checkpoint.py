@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compact reverse-engineering worker result JSON into a synthesis checkpoint."""
+"""Compact mixed Orca worker result JSON into a high-signal checkpoint."""
 from __future__ import annotations
 
 import argparse
@@ -13,15 +13,14 @@ DROP = {
     "raw_disassembly", "raw_pseudocode", "full_trace", "binary_blob",
 }
 KEEP = (
-    "task_id", "status", "worker_profile", "role_intent", "context_version",
-    "batch", "report_path", "contract_ref", "target", "input_manifest",
-    "coverage", "evidence_index", "raw_source_refs", "candidate_anomalies",
-    "repro_command", "upstream_evidence", "behavior_validation",
-    "artifact_id", "artifact_digest",
-    "base_revision", "analysis_revision", "conclusion", "evidence",
-    "local_semantics", "confidence", "alternatives", "contradictions", "accepted_names",
-    "accepted_types", "accepted_offsets", "accepted_states", "schema",
-    "mutations", "validation", "new_facts", "context_delta", "risks", "questions",
+    "task_id", "status", "domain", "role", "derived_profile", "lane", "target",
+    "context_version", "artifact_id", "artifact_digest", "analysis_revision",
+    "batch", "input_manifest", "coverage", "report_path", "contract_ref",
+    "leaf_artifacts", "evidence_index", "raw_source_refs", "candidate_anomalies",
+    "conclusion", "evidence", "confidence", "alternatives", "contradictions",
+    "base_commit", "head_commit", "changed_files", "mutations",
+    "acceptance", "behavior_validation", "tests", "checks", "validation",
+    "decisions", "new_facts", "context_delta", "risks", "questions",
     "scope_deviation", "coordinator_decision_required", "summary", "next_actions",
 )
 
@@ -37,10 +36,8 @@ def scrub(value):
 def compact(item: dict) -> dict:
     item = scrub(item)
     out = {key: item[key] for key in KEEP if key in item and item[key] not in (None, [], {}, "")}
-    if "task_id" not in out:
-        out["task_id"] = item.get("id", "unknown")
-    if "status" not in out:
-        out["status"] = "unknown"
+    out.setdefault("task_id", item.get("id", "unknown"))
+    out.setdefault("status", "unknown")
     return out
 
 
@@ -52,6 +49,8 @@ def load(path: str):
 
 def make_checkpoint(
     items: list[dict],
+    run_domain: str | None = None,
+    integration_head: str | None = None,
     analysis_head: str | None = None,
     context_version: str | None = None,
 ) -> dict:
@@ -67,25 +66,33 @@ def make_checkpoint(
             counts["failed"] += 1
         else:
             counts["other"] += 1
-    out = {"schema": "orca.reverse-checkpoint-lite/v1", "counts": counts, "tasks": tasks}
-    if analysis_head:
-        out["analysis_head"] = analysis_head
-    if context_version:
-        out["context_version"] = context_version
+    out = {
+        "schema": "orca.task-execution-checkpoint/v1",
+        "execution_owner_skill": "orca-task-execution",
+        "counts": counts,
+        "tasks": tasks,
+    }
+    for key, value in (
+        ("run_domain", run_domain),
+        ("integration_head", integration_head),
+        ("analysis_head", analysis_head),
+        ("context_version", context_version),
+    ):
+        if value:
+            out[key] = value
     return out
 
 
 def markdown(checkpoint: dict) -> str:
     counts = checkpoint["counts"]
     lines = [
-        "# Reverse-Engineering Checkpoint",
+        "# Orca Task Checkpoint",
         "",
         f"Done: {counts['done']} | Blocked: {counts['blocked']} | Failed: {counts['failed']} | Other: {counts['other']}",
     ]
-    if checkpoint.get("analysis_head"):
-        lines.append(f"Analysis head: `{checkpoint['analysis_head']}`")
-    if checkpoint.get("context_version"):
-        lines.append(f"Context version: `{checkpoint['context_version']}`")
+    for key in ("run_domain", "integration_head", "analysis_head", "context_version"):
+        if checkpoint.get(key):
+            lines.append(f"{key}: `{checkpoint[key]}`")
     for task in checkpoint["tasks"]:
         lines += ["", f"## {task.get('task_id')} — {task.get('status')}"]
         for key in KEEP:
@@ -98,31 +105,18 @@ def markdown(checkpoint: dict) -> str:
 
 
 def self_test() -> int:
-    raw = {
-        "task_id": "T1",
-        "status": "done",
-        "role_intent": "local-semantics",
-        "report_path": "reports/t1.json",
-        "contract_ref": "contracts/receive-v2",
-        "behavior_validation": "passed",
-        "evidence_index": "reports/session-a-index.json",
-        "artifact_digest": "sha256:abc",
-        "conclusion": "handler parses frame header",
-        "evidence": [{"function": "0x401000", "fact": "reads length"}],
-        "confidence": "high",
-        "raw_disassembly": "x" * 1000,
-        "summary": "frame header recovered",
-    }
-    checkpoint = make_checkpoint([raw], "db-r7", "ctx-3")
+    items = [
+        {"task_id": "R1", "status": "done", "domain": "reverse", "role": "luna", "coverage": {"processed": 65}, "evidence_index": "reports/index.json", "raw_log": "x" * 1000, "summary": "indexed"},
+        {"task_id": "S1", "status": "done", "domain": "software", "role": "terra", "changed_files": ["src/a.py"], "tests": ["pytest: pass"], "terminal_output": "y" * 1000, "summary": "fixed"},
+    ]
+    checkpoint = make_checkpoint(items, "mixed", "abc", "db-r7", "ctx-3")
     blob = json.dumps(checkpoint)
-    assert "raw_disassembly" not in blob and "xxxxxxxx" not in blob
-    assert checkpoint["counts"]["done"] == 1
-    assert checkpoint["analysis_head"] == "db-r7"
-    assert checkpoint["context_version"] == "ctx-3"
-    assert checkpoint["tasks"][0]["role_intent"] == "local-semantics"
-    assert checkpoint["tasks"][0]["evidence_index"] == "reports/session-a-index.json"
-    assert checkpoint["tasks"][0]["report_path"] == "reports/t1.json"
-    assert checkpoint["tasks"][0]["behavior_validation"] == "passed"
+    assert "raw_log" not in blob and "terminal_output" not in blob
+    assert checkpoint["counts"]["done"] == 2
+    assert checkpoint["execution_owner_skill"] == "orca-task-execution"
+    assert checkpoint["run_domain"] == "mixed"
+    assert checkpoint["tasks"][0]["evidence_index"] == "reports/index.json"
+    assert checkpoint["tasks"][1]["changed_files"] == ["src/a.py"]
     print("self-test: ok")
     return 0
 
@@ -130,6 +124,8 @@ def self_test() -> int:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("paths", nargs="*")
+    parser.add_argument("--run-domain", choices=("software", "reverse", "mixed"))
+    parser.add_argument("--integration-head")
     parser.add_argument("--analysis-head")
     parser.add_argument("--context-version")
     parser.add_argument("--format", choices=("json", "markdown"), default="json")
@@ -143,7 +139,13 @@ def main() -> int:
         items = []
         for path in args.paths:
             items.extend(load(path))
-        checkpoint = make_checkpoint(items, args.analysis_head, args.context_version)
+        checkpoint = make_checkpoint(
+            items,
+            args.run_domain,
+            args.integration_head,
+            args.analysis_head,
+            args.context_version,
+        )
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

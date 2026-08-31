@@ -1,6 +1,0 @@
-interface:
-  display_name: "Orca Software Development"
-  short_description: "Lean Orca orchestration for non-trivial coding"
-  default_prompt: "Use $orca-software-development as the exclusive software Task execution-ownership authority, choose the smallest reliable execution shape, delegate through Orca when required, and verify the integrated result."
-policy:
-  allow_implicit_invocation: true

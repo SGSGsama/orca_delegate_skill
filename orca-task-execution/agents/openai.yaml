@@ -1,0 +1,6 @@
+interface:
+  display_name: "Orca Task Execution"
+  short_description: "Route software and reversing work through Orca"
+  default_prompt: "Use $orca-task-execution to classify this task, select the smallest reliable execution shape, and enforce the appropriate Orca worker contract."
+policy:
+  allow_implicit_invocation: true
