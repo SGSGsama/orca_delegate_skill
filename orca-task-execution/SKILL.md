@@ -10,7 +10,7 @@ description: >-
   never assign ownership. Direct work is limited to bounded tasks and must be
   re-routed when scope expands.
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
 ---
 
 # Orca Task Execution
@@ -66,9 +66,9 @@ The coordinator chooses domain and role under this skill; it does not choose mod
 
 | Domain / role | Derived profile |
 |---|---|
-| `software / terra` | `codex / gpt-5.6-terra / xhigh` |
+| `software / terra` | `codex / gpt-5.6-terra / medium` |
 | `software / luna` | `codex / gpt-5.6-luna / max` |
-| `reverse / terra` | `codex / gpt-5.6-terra / max` |
+| `reverse / terra` | `codex / gpt-5.6-terra / high` |
 | `reverse / luna` | `codex / gpt-5.6-luna / max` |
 
 Record `execution_owner_skill`, Run domain, Task domain/role, execution shape, direct basis/revocation, context version, and outstanding Dispatches in compact Run Context. After compaction, recover these fields from durable Run/Task state; absence of a Run does not prove direct execution remains valid.

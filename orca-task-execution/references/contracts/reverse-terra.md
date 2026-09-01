@@ -1,6 +1,6 @@
 # Reverse Terra Contract
 
-Use for `reverse / terra`. The derived profile is `codex / gpt-5.6-terra / max`.
+Use for `reverse / terra`. The derived profile is `codex / gpt-5.6-terra / high`.
 
 Terra owns one bounded semantic question for an exact function, tightly coupled cluster, structure/state slice, or local hypothesis. Keep exploration, hypothesis testing, evidence collection, and conclusion together; reuse the terminal only after a coordinator-issued target delta.
 

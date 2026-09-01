@@ -25,9 +25,9 @@ The Task spec must start with exactly:
   [worker-role: terra|luna]
 
 Derived profiles:
-  software / terra -> codex / gpt-5.6-terra / xhigh
+  software / terra -> codex / gpt-5.6-terra / medium
   software / luna  -> codex / gpt-5.6-luna  / max
-  reverse  / terra -> codex / gpt-5.6-terra / max
+  reverse  / terra -> codex / gpt-5.6-terra / high
   reverse  / luna  -> codex / gpt-5.6-luna  / max
 
 This script rejects caller-supplied ownership, domain, role, profile, terminal,
@@ -95,9 +95,9 @@ if owner != "orca-task-execution":
     raise SystemExit(f"Task execution owner must be orca-task-execution, got {owner!r}")
 
 profiles = {
-    ("software", "terra"): ("codex", "gpt-5.6-terra", "xhigh"),
+    ("software", "terra"): ("codex", "gpt-5.6-terra", "medium"),
     ("software", "luna"): ("codex", "gpt-5.6-luna", "max"),
-    ("reverse", "terra"): ("codex", "gpt-5.6-terra", "max"),
+    ("reverse", "terra"): ("codex", "gpt-5.6-terra", "high"),
     ("reverse", "luna"): ("codex", "gpt-5.6-luna", "max"),
 }
 profile = profiles.get((domain, role))
@@ -182,15 +182,15 @@ run_self_test() {
 {"ok":true,"result":{"tasks":[{"id":"ST","spec":"[execution-owner: skill=orca-task-execution]\n[task-domain: software]\n[worker-role: terra]\nTask: ST"},{"id":"SL","spec":"[execution-owner: skill=orca-task-execution]\n[task-domain: software]\n[worker-role: luna]\nTask: SL"},{"id":"RT","spec":"[execution-owner: skill=orca-task-execution]\n[task-domain: reverse]\n[worker-role: terra]\nTask: RT"},{"id":"RL","spec":"[execution-owner: skill=orca-task-execution]\n[task-domain: reverse]\n[worker-role: luna]\nTask: RL"},{"id":"BAD_OWNER","spec":"[execution-owner: skill=bn]\n[task-domain: reverse]\n[worker-role: terra]\nTask: BAD_OWNER"},{"id":"BAD_DOMAIN","spec":"[execution-owner: skill=orca-task-execution]\n[task-domain: mixed]\n[worker-role: terra]\nTask: BAD_DOMAIN"},{"id":"BAD_ROLE","spec":"[execution-owner: skill=orca-task-execution]\n[task-domain: software]\n[worker-role: coordinator]\nTask: BAD_ROLE"}]}}
 JSON
   cat >"$dispatch_tmp_dir/receipt.json" <<'JSON'
-{"ok":true,"result":{"launch":{"requested":{"agent":"codex","model":"gpt-5.6-terra","effort":"xhigh"},"effective":{"agent":"codex","model":"gpt-5.6-terra","effort":"xhigh"}}}}
+{"ok":true,"result":{"launch":{"requested":{"agent":"codex","model":"gpt-5.6-terra","effort":"medium"},"effective":{"agent":"codex","model":"gpt-5.6-terra","effort":"medium"}}}}
 JSON
   cat >"$dispatch_tmp_dir/bad-receipt.json" <<'JSON'
-{"ok":true,"result":{"launch":{"requested":{"agent":"codex","model":"gpt-5.6-terra","effort":"xhigh"},"effective":{"agent":"codex","model":"gpt-5.6-terra","effort":"medium"}}}}
+{"ok":true,"result":{"launch":{"requested":{"agent":"codex","model":"gpt-5.6-terra","effort":"medium"},"effective":{"agent":"codex","model":"gpt-5.6-terra","effort":"low"}}}}
 JSON
 
-  [ "$(extract_task_launch_contract "$dispatch_tmp_dir/tasks.json" ST)" = $'codex\tgpt-5.6-terra\txhigh\torca-task-execution\tsoftware\tterra' ] || die "software/Terra route self-test failed"
+  [ "$(extract_task_launch_contract "$dispatch_tmp_dir/tasks.json" ST)" = $'codex\tgpt-5.6-terra\tmedium\torca-task-execution\tsoftware\tterra' ] || die "software/Terra route self-test failed"
   [ "$(extract_task_launch_contract "$dispatch_tmp_dir/tasks.json" SL)" = $'codex\tgpt-5.6-luna\tmax\torca-task-execution\tsoftware\tluna' ] || die "software/Luna route self-test failed"
-  [ "$(extract_task_launch_contract "$dispatch_tmp_dir/tasks.json" RT)" = $'codex\tgpt-5.6-terra\tmax\torca-task-execution\treverse\tterra' ] || die "reverse/Terra route self-test failed"
+  [ "$(extract_task_launch_contract "$dispatch_tmp_dir/tasks.json" RT)" = $'codex\tgpt-5.6-terra\thigh\torca-task-execution\treverse\tterra' ] || die "reverse/Terra route self-test failed"
   [ "$(extract_task_launch_contract "$dispatch_tmp_dir/tasks.json" RL)" = $'codex\tgpt-5.6-luna\tmax\torca-task-execution\treverse\tluna' ] || die "reverse/Luna route self-test failed"
   for bad in BAD_OWNER BAD_DOMAIN BAD_ROLE; do
     if extract_task_launch_contract "$dispatch_tmp_dir/tasks.json" "$bad" >/dev/null 2>&1; then
@@ -198,8 +198,8 @@ JSON
     fi
   done
 
-  verify_launch_receipt "$dispatch_tmp_dir/receipt.json" codex gpt-5.6-terra xhigh
-  if verify_launch_receipt "$dispatch_tmp_dir/bad-receipt.json" codex gpt-5.6-terra xhigh >/dev/null 2>&1; then
+  verify_launch_receipt "$dispatch_tmp_dir/receipt.json" codex gpt-5.6-terra medium
+  if verify_launch_receipt "$dispatch_tmp_dir/bad-receipt.json" codex gpt-5.6-terra medium >/dev/null 2>&1; then
     die "receipt mismatch self-test failed"
   fi
   printf 'self-test: ok\n'

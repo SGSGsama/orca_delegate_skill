@@ -1,6 +1,6 @@
 # Software Terra Contract
 
-Use for `software / terra`. The derived profile is `codex / gpt-5.6-terra / xhigh`.
+Use for `software / terra`. The derived profile is `codex / gpt-5.6-terra / medium`.
 
 Terra owns one cohesive semantic lane: bounded discovery, causal diagnosis, integrated implementation, tests, composition of accepted Luna artifacts, and ordinary repair. Keep the inspect → implement → test → repair loop together and reuse the same valid terminal for coordinator-issued continuation.
 
